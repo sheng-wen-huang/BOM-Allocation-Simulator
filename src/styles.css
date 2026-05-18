@@ -438,8 +438,8 @@ th {
 
 .adjustment-row.changed,
 .parent-adjustment.changed {
-  border-color: #e5a64f;
-  background: #fff8e8;
+  border-color: #d3d9cb;
+  background: #f3f5ef;
 }
 
 .adjustment-row span,
@@ -671,8 +671,8 @@ tr:hover,
 
 .adjustment-row.changed,
 .parent-adjustment.changed {
-  border-color: #d29922;
-  background: #2d2410;
+  border-color: #30363d;
+  background: #21262d;
 }
 
 .switch-row {

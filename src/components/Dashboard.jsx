@@ -2,8 +2,8 @@ import { ChevronDown, ChevronRight } from 'lucide-react';
 import { Fragment, useMemo, useState } from 'react';
 
 const columns = [
-  ['parentSku', 'ParentSKU'],
-  ['priorityScore', 'PriorityScore'],
+  ['parentSku', 'SKU'],
+  ['priorityScore', 'Priority'],
   ['availSoh', 'AvailSOH'],
   ['mode', 'Mode'],
   ['bottleneck', 'Bottleneck'],
@@ -79,7 +79,7 @@ function DetailPanel({ detail }) {
 
   return (
     <div className="detail-panel">
-      <p>PriorityScore is zero or invalid. No inventory was consumed.</p>
+      <p>Priority is zero or invalid. No inventory was consumed.</p>
     </div>
   );
 }
@@ -142,7 +142,7 @@ export default function Dashboard({ calculation }) {
             className="search-input"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search ParentSKU"
+            placeholder="Search SKU"
           />
         </div>
         <div className="table-wrap results-table-wrap">

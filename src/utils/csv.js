@@ -6,7 +6,7 @@ function escapeCsv(value) {
 }
 
 export function resultsToCsv(results) {
-  const header = ['ParentSKU', 'PriorityScore', 'AvailSOH', 'Mode', 'Bottleneck'];
+  const header = ['SKU', 'Priority', 'AvailSOH', 'Mode', 'Bottleneck'];
   const lines = results.map((row) =>
     [row.parentSku, row.priorityScore, row.availSoh, row.mode, row.bottleneck].map(escapeCsv).join(','),
   );

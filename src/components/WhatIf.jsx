@@ -23,6 +23,16 @@ function aggregateInventory(inventoryRows) {
     .sort((a, b) => a.sku.localeCompare(b.sku));
 }
 
+function sohClass(value) {
+  return value > 0 ? 'soh-positive' : 'soh-zero';
+}
+
+function afterSohClass(row) {
+  if (row.delta > 0) return 'delta-up';
+  if (row.delta < 0) return 'delta-down';
+  return sohClass(row.afterAvailSoh);
+}
+
 export default function WhatIf({
   bomRows,
   inventoryRows,
@@ -106,7 +116,7 @@ export default function WhatIf({
           className="search-input full"
           value={filter}
           onChange={(event) => updateScenario({ filter: event.target.value })}
-          placeholder="Filter SKU or ParentSKU"
+          placeholder="Filter SKU"
         />
 
         <h3>Inventory Adjustments</h3>
@@ -195,7 +205,7 @@ export default function WhatIf({
           <table>
             <thead>
               <tr>
-                <th>ParentSKU</th>
+                <th>SKU</th>
                 <th>Priority</th>
                 <th>Before AvailSOH</th>
                 <th>After AvailSOH</th>
@@ -215,12 +225,14 @@ export default function WhatIf({
                   <tr key={row.parentSku} className={row.delta > 0 ? 'delta-up-row' : row.delta < 0 ? 'delta-down-row' : ''}>
                     <td>{row.parentSku}</td>
                     <td>{row.priorityScore}</td>
-                    <td>{row.beforeAvailSoh}</td>
-                    <td>{row.afterAvailSoh}</td>
+                    <td className={sohClass(row.beforeAvailSoh)}>{row.beforeAvailSoh}</td>
+                    <td className={afterSohClass(row)}>{row.afterAvailSoh}</td>
                     <td className={row.delta > 0 ? 'delta-up' : row.delta < 0 ? 'delta-down' : 'muted'}>
                       {row.delta > 0 ? `+${row.delta}` : row.delta < 0 ? row.delta : '-'}
                     </td>
-                    <td>{row.mode}</td>
+                    <td>
+                      <span className={`mode-badge ${row.mode.toLowerCase()}`}>{row.mode}</span>
+                    </td>
                   </tr>
                 ))
               )}
