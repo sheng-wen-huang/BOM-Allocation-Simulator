@@ -390,7 +390,11 @@ th {
 }
 
 .hot-row {
-  background: #fff2db;
+  background: transparent;
+}
+
+.hot-row td:first-child {
+  box-shadow: inset 3px 0 #cbd4bf;
 }
 
 .whatif-layout {
@@ -666,7 +670,11 @@ tr:hover,
 }
 
 .hot-row {
-  background: #332b16;
+  background: transparent;
+}
+
+.hot-row td:first-child {
+  box-shadow: inset 3px 0 #8b949e;
 }
 
 .adjustment-row.changed,

@@ -23,6 +23,16 @@ function aggregateInventory(inventoryRows) {
     .sort((a, b) => a.sku.localeCompare(b.sku));
 }
 
+function buildComparisonRows(result, baseline) {
+  const baselineMap = new Map(baseline.results.map((row) => [row.parentSku, row]));
+  return result.results
+    .map((row) => {
+      const before = baselineMap.get(row.parentSku)?.availSoh || 0;
+      return { ...row, beforeAvailSoh: before, afterAvailSoh: row.availSoh, delta: row.availSoh - before };
+    })
+    .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta) || a.parentSku.localeCompare(b.parentSku));
+}
+
 function sohClass(value) {
   return value > 0 ? 'soh-positive' : 'soh-zero';
 }
@@ -48,6 +58,7 @@ export default function WhatIf({
 
   const inventory = useMemo(() => aggregateInventory(inventoryRows), [inventoryRows]);
   const parents = useMemo(() => uniqueParents(bomRows), [bomRows]);
+  const baselineComparison = useMemo(() => buildComparisonRows(baseline, baseline), [baseline]);
   const normalizedFilter = filter.trim().toLowerCase();
 
   const visibleInventory = inventory.filter((row) => row.sku.toLowerCase().includes(normalizedFilter)).slice(0, 80);
@@ -63,6 +74,9 @@ export default function WhatIf({
   useEffect(() => {
     if (!hasScenarioChanges) {
       setIsRunning(false);
+      if (comparison.length === 0) {
+        onScenarioChange((current) => ({ ...current, comparison: baselineComparison }));
+      }
       return undefined;
     }
 
@@ -75,14 +89,7 @@ export default function WhatIf({
         const result = await onRunWhatIf({ inventoryQty, priority, fixedMode });
         if (canceled) return;
 
-        const baselineMap = new Map(baseline.results.map((row) => [row.parentSku, row]));
-        const comparisonRows = result.results
-          .map((row) => {
-            const before = baselineMap.get(row.parentSku)?.availSoh || 0;
-            return { ...row, beforeAvailSoh: before, afterAvailSoh: row.availSoh, delta: row.availSoh - before };
-          })
-          .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta) || a.parentSku.localeCompare(b.parentSku));
-        onScenarioChange((current) => ({ ...current, comparison: comparisonRows }));
+        onScenarioChange((current) => ({ ...current, comparison: buildComparisonRows(result, baseline) }));
         onScenarioResult(result);
       } catch (scenarioError) {
         if (!canceled) setError(scenarioError.message);
@@ -95,10 +102,21 @@ export default function WhatIf({
       canceled = true;
       window.clearTimeout(timer);
     };
-  }, [baseline.results, fixedMode, hasScenarioChanges, inventoryQty, onRunWhatIf, onScenarioChange, onScenarioResult, priority]);
+  }, [
+    baseline,
+    baselineComparison,
+    comparison.length,
+    fixedMode,
+    hasScenarioChanges,
+    inventoryQty,
+    onRunWhatIf,
+    onScenarioChange,
+    onScenarioResult,
+    priority,
+  ]);
 
   function resetAll() {
-    updateScenario({ inventoryQty: {}, priority: {}, fixedMode: {}, comparison: [] });
+    updateScenario({ inventoryQty: {}, priority: {}, fixedMode: {}, comparison: baselineComparison });
     onScenarioResult(null);
     setError('');
   }
@@ -225,7 +243,7 @@ export default function WhatIf({
                   <tr key={row.parentSku} className={row.delta > 0 ? 'delta-up-row' : row.delta < 0 ? 'delta-down-row' : ''}>
                     <td>{row.parentSku}</td>
                     <td>{row.priorityScore}</td>
-                    <td className={sohClass(row.beforeAvailSoh)}>{row.beforeAvailSoh}</td>
+                    <td>{row.beforeAvailSoh}</td>
                     <td className={afterSohClass(row)}>{row.afterAvailSoh}</td>
                     <td className={row.delta > 0 ? 'delta-up' : row.delta < 0 ? 'delta-down' : 'muted'}>
                       {row.delta > 0 ? `+${row.delta}` : row.delta < 0 ? row.delta : '-'}
