@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { applyScenarioOverrides, calculateAllocation } from '../engine/calculator.js';
 import { parseBomCsv, parseInventoryCsv } from '../engine/parser.js';
+import { bomTemplateResultsToCsv } from '../utils/csv.js';
 
 function rows(bomCsv, inventoryCsv) {
   const bom = parseBomCsv(bomCsv);
@@ -142,5 +143,53 @@ describe('calculateAllocation', () => {
 
     expect(adjusted.inventoryRows).toHaveLength(1);
     expect(resultBySku(result, 'KIT-A').availSoh).toBe(7);
+  });
+
+  it('parses the BOM template columns and preserves non-calculation fields', () => {
+    const parsed = parseBomCsv(
+      [
+        'storerkey,sku,componentsku,sequence,bomonly,notes,qty,parentqty,udf01,udf02,udf03',
+        'WH1,KIT-A,COMP-1,10,N,Keep this,2,1,,blue,100',
+      ].join('\n'),
+    );
+
+    expect(parsed.errors).toEqual([]);
+    expect(parsed.rows[0]).toMatchObject({
+      storerkey: 'WH1',
+      parentSku: 'KIT-A',
+      componentSku: 'COMP-1',
+      sequence: '10',
+      bomonly: 'N',
+      notes: 'Keep this',
+      qtyPerBom: 2,
+      parentqty: '1',
+      udf02: 'blue',
+      udf03: 100,
+    });
+  });
+
+  it('accepts inventory aliases from the warehouse export template', () => {
+    const parsed = parseInventoryCsv(['產品名稱,E208-EC倉', 'COMP-1,12'].join('\n'));
+
+    expect(parsed.errors).toEqual([]);
+    expect(parsed.rows[0]).toMatchObject({ sku: 'COMP-1', qty: 12 });
+  });
+
+  it('exports BOM template columns with what-if UDF01 and UDF03 values', () => {
+    const [bomRows, inventoryRows] = rows(
+      [
+        'storerkey,sku,componentsku,sequence,bomonly,notes,qty,parentqty,udf01,udf02,udf03',
+        'WH1,KIT-X,COMP-1,10,Y,Reserve,2,1,X,,10',
+        'WH1,KIT-P,COMP-1,20,N,Priority,1,1,,,500',
+      ].join('\n'),
+      ['sku,qty', 'COMP-1,9'].join('\n'),
+    );
+    const calculation = calculateAllocation(bomRows, inventoryRows);
+
+    const csv = bomTemplateResultsToCsv(bomRows, calculation).split('\n');
+
+    expect(csv[0]).toBe('storerkey,sku,componentsku,sequence,bomonly,notes,qty,parentqty,udf01,udf02,udf03');
+    expect(csv[1]).toBe('WH1,KIT-X,COMP-1,10,Y,Reserve,2,1,X,,4');
+    expect(csv[2]).toBe('WH1,KIT-P,COMP-1,20,N,Priority,1,1,,,500');
   });
 });

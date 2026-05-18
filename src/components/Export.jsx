@@ -1,8 +1,8 @@
 import { Download } from 'lucide-react';
-import { datedResultFilename, downloadCsv, resultsToCsv } from '../utils/csv.js';
+import { bomTemplateResultsToCsv, datedResultFilename, downloadCsv } from '../utils/csv.js';
 
-export default function Export({ results }) {
-  const csvText = resultsToCsv(results);
+export default function Export({ bomRows, calculation, sourceLabel }) {
+  const csvText = bomTemplateResultsToCsv(bomRows, calculation);
   const preview = csvText.split('\n').slice(0, 11);
   const filename = datedResultFilename();
 
@@ -12,7 +12,7 @@ export default function Export({ results }) {
         <div className="panel-header">
           <div>
             <h2>Export Results</h2>
-            <p>{filename}</p>
+            <p>{filename} - {sourceLabel}</p>
           </div>
           <button type="button" className="primary-button" onClick={() => downloadCsv(filename, csvText)}>
             <Download size={16} /> Download CSV

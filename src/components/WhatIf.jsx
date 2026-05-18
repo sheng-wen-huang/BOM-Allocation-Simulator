@@ -23,14 +23,10 @@ function aggregateInventory(inventoryRows) {
     .sort((a, b) => a.sku.localeCompare(b.sku));
 }
 
-export default function WhatIf({ bomRows, inventoryRows, baseline, onRunWhatIf }) {
-  const [filter, setFilter] = useState('');
-  const [inventoryQty, setInventoryQty] = useState({});
-  const [priority, setPriority] = useState({});
-  const [fixedMode, setFixedMode] = useState({});
-  const [comparison, setComparison] = useState([]);
+export default function WhatIf({ bomRows, inventoryRows, baseline, scenario, onScenarioChange, onScenarioResult, onRunWhatIf }) {
   const [isRunning, setIsRunning] = useState(false);
   const [error, setError] = useState('');
+  const { filter, inventoryQty, priority, fixedMode, comparison } = scenario;
 
   const inventory = useMemo(() => aggregateInventory(inventoryRows), [inventoryRows]);
   const parents = useMemo(() => uniqueParents(bomRows), [bomRows]);
@@ -38,6 +34,11 @@ export default function WhatIf({ bomRows, inventoryRows, baseline, onRunWhatIf }
 
   const visibleInventory = inventory.filter((row) => row.sku.toLowerCase().includes(normalizedFilter)).slice(0, 80);
   const visibleParents = parents.filter((row) => row.parentSku.toLowerCase().includes(normalizedFilter)).slice(0, 80);
+
+  function updateScenario(patch, clearResult = false) {
+    onScenarioChange((current) => ({ ...current, ...patch }));
+    if (clearResult) onScenarioResult(null);
+  }
 
   async function runScenario() {
     setIsRunning(true);
@@ -51,7 +52,8 @@ export default function WhatIf({ bomRows, inventoryRows, baseline, onRunWhatIf }
           return { ...row, beforeAvailSoh: before, afterAvailSoh: row.availSoh, delta: row.availSoh - before };
         })
         .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta) || a.parentSku.localeCompare(b.parentSku));
-      setComparison(comparisonRows);
+      updateScenario({ comparison: comparisonRows });
+      onScenarioResult(result);
     } catch (scenarioError) {
       setError(scenarioError.message);
     } finally {
@@ -60,10 +62,8 @@ export default function WhatIf({ bomRows, inventoryRows, baseline, onRunWhatIf }
   }
 
   function resetAll() {
-    setInventoryQty({});
-    setPriority({});
-    setFixedMode({});
-    setComparison([]);
+    updateScenario({ inventoryQty: {}, priority: {}, fixedMode: {}, comparison: [] });
+    onScenarioResult(null);
     setError('');
   }
 
@@ -79,7 +79,7 @@ export default function WhatIf({ bomRows, inventoryRows, baseline, onRunWhatIf }
         <input
           className="search-input full"
           value={filter}
-          onChange={(event) => setFilter(event.target.value)}
+          onChange={(event) => updateScenario({ filter: event.target.value })}
           placeholder="Filter SKU or ParentSKU"
         />
 
@@ -96,7 +96,10 @@ export default function WhatIf({ bomRows, inventoryRows, baseline, onRunWhatIf }
                   step="0.01"
                   value={changed ? inventoryQty[row.sku] : row.qty}
                   onChange={(event) =>
-                    setInventoryQty((current) => ({ ...current, [row.sku]: Number(event.target.value) }))
+                    updateScenario(
+                      { inventoryQty: { ...inventoryQty, [row.sku]: Number(event.target.value) }, comparison: [] },
+                      true,
+                    )
                   }
                 />
               </label>
@@ -121,7 +124,10 @@ export default function WhatIf({ bomRows, inventoryRows, baseline, onRunWhatIf }
                     step="1"
                     value={priorityChanged ? priority[row.parentSku] : row.priority}
                     onChange={(event) =>
-                      setPriority((current) => ({ ...current, [row.parentSku]: Number(event.target.value) }))
+                      updateScenario(
+                        { priority: { ...priority, [row.parentSku]: Number(event.target.value) }, comparison: [] },
+                        true,
+                      )
                     }
                   />
                 </label>
@@ -130,7 +136,10 @@ export default function WhatIf({ bomRows, inventoryRows, baseline, onRunWhatIf }
                     type="checkbox"
                     checked={fixed}
                     onChange={(event) =>
-                      setFixedMode((current) => ({ ...current, [row.parentSku]: event.target.checked }))
+                      updateScenario(
+                        { fixedMode: { ...fixedMode, [row.parentSku]: event.target.checked }, comparison: [] },
+                        true,
+                      )
                     }
                   />
                   UDF01=X

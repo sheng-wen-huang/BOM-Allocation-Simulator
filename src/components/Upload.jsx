@@ -1,5 +1,5 @@
 import { CheckCircle2, Download, FileUp, Play, XCircle } from 'lucide-react';
-import { sampleBomCsv, sampleInventoryCsv } from '../engine/parser.js';
+import { BOM_COLUMNS, sampleBomCsv, sampleInventoryCsv } from '../engine/parser.js';
 
 function readFile(file, callback) {
   const reader = new FileReader();
@@ -89,7 +89,8 @@ export default function Upload({
   isRunning,
   runError,
 }) {
-  const previewRows = bomState.rows.slice(0, 20);
+  const bomPreviewRows = bomState.rows.slice(0, 20);
+  const inventoryPreviewRows = inventoryState.rows.slice(0, 20);
 
   return (
     <div className="page-grid">
@@ -125,28 +126,67 @@ export default function Upload({
           <table>
             <thead>
               <tr>
-                <th>ParentSKU</th>
-                <th>ComponentSKU</th>
-                <th>QtyPerBOM</th>
-                <th>UDF01</th>
-                <th>UDF03</th>
+                {BOM_COLUMNS.map((column) => (
+                  <th key={column}>{column}</th>
+                ))}
               </tr>
             </thead>
             <tbody>
-              {previewRows.length === 0 ? (
+              {bomPreviewRows.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="empty-cell">
+                  <td colSpan={BOM_COLUMNS.length} className="empty-cell">
                     Upload a valid BOM Structure CSV to preview data.
                   </td>
                 </tr>
               ) : (
-                previewRows.map((row) => (
+                bomPreviewRows.map((row) => (
                   <tr key={row.id}>
+                    <td>{row.storerkey}</td>
                     <td>{row.parentSku}</td>
                     <td>{row.componentSku}</td>
-                    <td>{row.qtyPerBom}</td>
+                    <td>{row.sequence}</td>
+                    <td>{row.bomonly}</td>
+                    <td>{row.notes}</td>
+                    <td>{row.raw?.qty ?? row.qtyPerBom}</td>
+                    <td>{row.parentqty}</td>
                     <td>{row.udf01}</td>
+                    <td>{row.udf02}</td>
                     <td>{row.udf03 ?? ''}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className="panel">
+        <div className="panel-header">
+          <div>
+            <h2>Inventory Preview</h2>
+            <p>First 20 uploaded inventory rows</p>
+          </div>
+        </div>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>sku</th>
+                <th>qty</th>
+              </tr>
+            </thead>
+            <tbody>
+              {inventoryPreviewRows.length === 0 ? (
+                <tr>
+                  <td colSpan="2" className="empty-cell">
+                    Upload a valid Inventory CSV to preview data.
+                  </td>
+                </tr>
+              ) : (
+                inventoryPreviewRows.map((row) => (
+                  <tr key={row.id}>
+                    <td>{row.sku}</td>
+                    <td>{row.raw?.qty ?? row.qty}</td>
                   </tr>
                 ))
               )}

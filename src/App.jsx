@@ -18,11 +18,17 @@ function makeEmptyFileState(label) {
   return { label, rows: [], errors: [], count: 0, status: 'empty', fileName: '' };
 }
 
+function makeEmptyScenarioState() {
+  return { filter: '', inventoryQty: {}, priority: {}, fixedMode: {}, comparison: [] };
+}
+
 export default function App() {
   const [activeTab, setActiveTab] = useState('upload');
   const [bomState, setBomState] = useState(makeEmptyFileState('BOM Structure'));
   const [inventoryState, setInventoryState] = useState(makeEmptyFileState('Inventory'));
   const [calculation, setCalculation] = useState(null);
+  const [whatIfState, setWhatIfState] = useState(makeEmptyScenarioState);
+  const [whatIfCalculation, setWhatIfCalculation] = useState(null);
   const [isRunning, setIsRunning] = useState(false);
   const [runError, setRunError] = useState('');
   const workerRef = useRef(null);
@@ -79,6 +85,8 @@ export default function App() {
       fileName,
     });
     setCalculation(null);
+    setWhatIfState(makeEmptyScenarioState());
+    setWhatIfCalculation(null);
     setRunError('');
     setActiveTab('upload');
   }, []);
@@ -92,6 +100,8 @@ export default function App() {
       fileName,
     });
     setCalculation(null);
+    setWhatIfState(makeEmptyScenarioState());
+    setWhatIfCalculation(null);
     setRunError('');
     setActiveTab('upload');
   }, []);
@@ -107,6 +117,8 @@ export default function App() {
         inventoryRows: inventoryState.rows,
       });
       setCalculation(payload);
+      setWhatIfState(makeEmptyScenarioState());
+      setWhatIfCalculation(null);
       setActiveTab('dashboard');
     } catch (error) {
       setRunError(error.message);
@@ -127,6 +139,8 @@ export default function App() {
   );
 
   const currentTab = calculation ? activeTab : activeTab === 'upload' ? activeTab : 'upload';
+  const exportCalculation = whatIfCalculation || calculation;
+  const exportSourceLabel = whatIfCalculation ? 'Latest What-If result' : 'Baseline result';
 
   return (
     <div className="app-shell">
@@ -175,10 +189,15 @@ export default function App() {
             bomRows={bomState.rows}
             inventoryRows={inventoryState.rows}
             baseline={calculation}
+            scenario={whatIfState}
+            onScenarioChange={setWhatIfState}
+            onScenarioResult={setWhatIfCalculation}
             onRunWhatIf={runWhatIf}
           />
         )}
-        {currentTab === 'export' && calculation && <Export results={calculation.results} />}
+        {currentTab === 'export' && calculation && (
+          <Export bomRows={bomState.rows} calculation={exportCalculation} sourceLabel={exportSourceLabel} />
+        )}
       </main>
     </div>
   );
