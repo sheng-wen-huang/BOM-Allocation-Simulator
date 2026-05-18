@@ -43,6 +43,12 @@ function afterSohClass(row) {
   return sohClass(row.afterAvailSoh);
 }
 
+function clampNumber(value, min, max = Infinity) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return min;
+  return Math.min(max, Math.max(min, number));
+}
+
 export default function WhatIf({
   bomRows,
   inventoryRows,
@@ -151,7 +157,13 @@ export default function WhatIf({
                   value={changed ? inventoryQty[row.sku] : row.qty}
                   onChange={(event) =>
                     updateScenario(
-                      { inventoryQty: { ...inventoryQty, [row.sku]: Number(event.target.value) }, comparison: [] },
+                      {
+                        inventoryQty: {
+                          ...inventoryQty,
+                          [row.sku]: clampNumber(event.target.value, 0),
+                        },
+                        comparison: [],
+                      },
                       true,
                     )
                   }
@@ -179,7 +191,13 @@ export default function WhatIf({
                     value={priorityChanged ? priority[row.parentSku] : row.priority}
                     onChange={(event) =>
                       updateScenario(
-                        { priority: { ...priority, [row.parentSku]: Number(event.target.value) }, comparison: [] },
+                        {
+                          priority: {
+                            ...priority,
+                            [row.parentSku]: clampNumber(event.target.value, 0, 1000),
+                          },
+                          comparison: [],
+                        },
                         true,
                       )
                     }
