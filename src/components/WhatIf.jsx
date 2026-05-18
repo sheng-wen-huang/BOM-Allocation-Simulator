@@ -1,5 +1,5 @@
-import { RotateCcw, SlidersHorizontal } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { RotateCcw } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 
 function uniqueParents(bomRows) {
   const map = new Map();
@@ -23,7 +23,15 @@ function aggregateInventory(inventoryRows) {
     .sort((a, b) => a.sku.localeCompare(b.sku));
 }
 
-export default function WhatIf({ bomRows, inventoryRows, baseline, scenario, onScenarioChange, onScenarioResult, onRunWhatIf }) {
+export default function WhatIf({
+  bomRows,
+  inventoryRows,
+  baseline,
+  scenario,
+  onScenarioChange,
+  onScenarioResult,
+  onRunWhatIf,
+}) {
   const [isRunning, setIsRunning] = useState(false);
   const [error, setError] = useState('');
   const { filter, inventoryQty, priority, fixedMode, comparison } = scenario;
@@ -34,32 +42,50 @@ export default function WhatIf({ bomRows, inventoryRows, baseline, scenario, onS
 
   const visibleInventory = inventory.filter((row) => row.sku.toLowerCase().includes(normalizedFilter)).slice(0, 80);
   const visibleParents = parents.filter((row) => row.parentSku.toLowerCase().includes(normalizedFilter)).slice(0, 80);
+  const hasScenarioChanges =
+    Object.keys(inventoryQty).length > 0 || Object.keys(priority).length > 0 || Object.keys(fixedMode).length > 0;
 
   function updateScenario(patch, clearResult = false) {
     onScenarioChange((current) => ({ ...current, ...patch }));
     if (clearResult) onScenarioResult(null);
   }
 
-  async function runScenario() {
+  useEffect(() => {
+    if (!hasScenarioChanges) {
+      setIsRunning(false);
+      return undefined;
+    }
+
+    let canceled = false;
     setIsRunning(true);
     setError('');
-    try {
-      const result = await onRunWhatIf({ inventoryQty, priority, fixedMode });
-      const baselineMap = new Map(baseline.results.map((row) => [row.parentSku, row]));
-      const comparisonRows = result.results
-        .map((row) => {
-          const before = baselineMap.get(row.parentSku)?.availSoh || 0;
-          return { ...row, beforeAvailSoh: before, afterAvailSoh: row.availSoh, delta: row.availSoh - before };
-        })
-        .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta) || a.parentSku.localeCompare(b.parentSku));
-      updateScenario({ comparison: comparisonRows });
-      onScenarioResult(result);
-    } catch (scenarioError) {
-      setError(scenarioError.message);
-    } finally {
-      setIsRunning(false);
-    }
-  }
+
+    const timer = window.setTimeout(async () => {
+      try {
+        const result = await onRunWhatIf({ inventoryQty, priority, fixedMode });
+        if (canceled) return;
+
+        const baselineMap = new Map(baseline.results.map((row) => [row.parentSku, row]));
+        const comparisonRows = result.results
+          .map((row) => {
+            const before = baselineMap.get(row.parentSku)?.availSoh || 0;
+            return { ...row, beforeAvailSoh: before, afterAvailSoh: row.availSoh, delta: row.availSoh - before };
+          })
+          .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta) || a.parentSku.localeCompare(b.parentSku));
+        onScenarioChange((current) => ({ ...current, comparison: comparisonRows }));
+        onScenarioResult(result);
+      } catch (scenarioError) {
+        if (!canceled) setError(scenarioError.message);
+      } finally {
+        if (!canceled) setIsRunning(false);
+      }
+    }, 250);
+
+    return () => {
+      canceled = true;
+      window.clearTimeout(timer);
+    };
+  }, [baseline.results, fixedMode, hasScenarioChanges, inventoryQty, onRunWhatIf, onScenarioChange, onScenarioResult, priority]);
 
   function resetAll() {
     updateScenario({ inventoryQty: {}, priority: {}, fixedMode: {}, comparison: [] });
@@ -93,7 +119,7 @@ export default function WhatIf({ bomRows, inventoryRows, baseline, scenario, onS
                 <input
                   type="number"
                   min="0"
-                  step="0.01"
+                  step="1"
                   value={changed ? inventoryQty[row.sku] : row.qty}
                   onChange={(event) =>
                     updateScenario(
@@ -150,9 +176,7 @@ export default function WhatIf({ bomRows, inventoryRows, baseline, scenario, onS
         </div>
 
         <div className="action-row">
-          <button type="button" className="primary-button" onClick={runScenario} disabled={isRunning}>
-            <SlidersHorizontal size={16} /> {isRunning ? 'Running...' : 'Run What-If'}
-          </button>
+          <span className="muted">{isRunning ? 'Calculating...' : 'Auto-calculation ready'}</span>
           <button type="button" className="ghost-button" onClick={resetAll}>
             <RotateCcw size={16} /> Reset All
           </button>
@@ -183,7 +207,7 @@ export default function WhatIf({ bomRows, inventoryRows, baseline, scenario, onS
               {comparison.length === 0 ? (
                 <tr>
                   <td colSpan="6" className="empty-cell">
-                    Run a what-if scenario to compare results.
+                    Adjust a scenario value to compare results.
                   </td>
                 </tr>
               ) : (

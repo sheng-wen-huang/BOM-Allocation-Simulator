@@ -89,8 +89,8 @@ export default function Upload({
   isRunning,
   runError,
 }) {
-  const bomPreviewRows = bomState.rows.slice(0, 20);
-  const inventoryPreviewRows = inventoryState.rows.slice(0, 20);
+  const bomPreviewRows = bomState.rows;
+  const inventoryPreviewRows = inventoryState.rows;
 
   return (
     <div className="page-grid">
@@ -115,7 +115,7 @@ export default function Upload({
         <div className="panel-header">
           <div>
             <h2>BOM Preview</h2>
-            <p>First 20 uploaded BOM rows</p>
+            <p>All uploaded BOM rows</p>
           </div>
           <button type="button" className="primary-button" onClick={onRun} disabled={!canRun || isRunning}>
             <Play size={16} /> {isRunning ? 'Running...' : 'Run Calculation'}
@@ -164,7 +164,7 @@ export default function Upload({
         <div className="panel-header">
           <div>
             <h2>Inventory Preview</h2>
-            <p>First 20 uploaded inventory rows</p>
+            <p>All uploaded inventory rows</p>
           </div>
         </div>
         <div className="table-wrap">

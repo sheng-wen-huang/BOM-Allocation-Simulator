@@ -520,6 +520,181 @@ th {
   line-height: 1.7;
 }
 
+:root {
+  color-scheme: dark;
+  background: #0d1117;
+  color: #e6edf3;
+}
+
+body {
+  background: #0d1117;
+}
+
+.topbar {
+  border-bottom-color: #30363d;
+  background: rgba(13, 17, 23, 0.94);
+}
+
+.eyebrow,
+.drop-target p,
+.panel-header p,
+.stat-card p,
+.detail-panel p,
+.muted {
+  color: #8b949e;
+}
+
+h3 {
+  color: #c9d1d9;
+}
+
+.tab-button {
+  color: #c9d1d9;
+}
+
+.tab-button.active {
+  color: #f0f6fc;
+  border-color: #388bfd;
+  background: #13233a;
+}
+
+.tab-button:hover:not(:disabled),
+.ghost-button:hover,
+.secondary-button:hover {
+  border-color: #388bfd;
+  background: #161b22;
+}
+
+.drop-zone,
+.panel,
+.scenario-panel,
+.stat-card,
+.adjustment-row,
+.parent-adjustment,
+.detail-panel {
+  border-color: #30363d;
+  background: #161b22;
+  box-shadow: 0 12px 28px rgba(1, 4, 9, 0.26);
+}
+
+.drop-zone.valid {
+  border-color: #3fb950;
+}
+
+.drop-zone.invalid {
+  border-color: #f85149;
+}
+
+.secondary-button,
+.ghost-button {
+  color: #e6edf3;
+  border-color: #30363d;
+  background: #21262d;
+}
+
+.primary-button {
+  border-color: #238636;
+  background: #238636;
+}
+
+.primary-button:hover:not(:disabled) {
+  background: #2ea043;
+}
+
+.status.good,
+.soh-positive,
+.delta-up {
+  color: #3fb950;
+}
+
+.status.bad,
+.inline-error,
+.soh-zero,
+.delta-down {
+  color: #ff7b72;
+}
+
+.error-list {
+  color: #ff7b72;
+}
+
+.panel-header,
+th,
+td {
+  border-bottom-color: #30363d;
+}
+
+th {
+  color: #c9d1d9;
+  background: #21262d;
+}
+
+tr:hover,
+.clickable-row:hover {
+  background: #1c2128;
+}
+
+.empty-cell {
+  color: #8b949e;
+}
+
+.search-input,
+.adjustment-row input,
+.parent-adjustment input[type="number"] {
+  color: #e6edf3;
+  border-color: #30363d;
+  background: #0d1117;
+}
+
+.mode-badge.x {
+  color: #d2a8ff;
+  background: #2d2141;
+}
+
+.mode-badge.waterfall {
+  color: #79c0ff;
+  background: #102a43;
+}
+
+.mode-badge.zero {
+  color: #ff7b72;
+  background: #3d1f22;
+}
+
+.warning {
+  color: #f2cc60 !important;
+}
+
+.hot-row {
+  background: #332b16;
+}
+
+.adjustment-row.changed,
+.parent-adjustment.changed {
+  border-color: #d29922;
+  background: #2d2410;
+}
+
+.switch-row {
+  color: #c9d1d9;
+}
+
+.delta-up-row {
+  background: #102b1b;
+}
+
+.delta-down-row {
+  background: #3d1f22;
+}
+
+.export-preview {
+  background: #010409;
+}
+
+.export-preview code {
+  color: #e6edf3;
+}
+
 @media (max-width: 980px) {
   .topbar,
   .panel-header {
