@@ -1,32 +1,21 @@
 import { CheckCircle2, Download, FileUp, Play, XCircle } from 'lucide-react';
-import { BOM_COLUMNS, sampleBomCsv, sampleInventoryCsv } from '../engine/parser.js';
-import { readXlsxMatrix } from '../utils/spreadsheet.js';
+import { BOM_COLUMNS, INVENTORY_COLUMNS, sampleBomRows, sampleInventoryRows } from '../engine/parser.js';
+import { downloadTemplateXlsx, readXlsxMatrix } from '../utils/spreadsheet.js';
 
 async function readFile(file, callback) {
   try {
-    if (file.name.toLowerCase().endsWith('.xlsx')) {
-      callback({ matrix: await readXlsxMatrix(file) }, file.name);
+    if (!file.name.toLowerCase().endsWith('.xlsx')) {
+      callback({ error: 'Only .xlsx files are supported.' }, file.name);
       return;
     }
 
-    const text = await file.text();
-    callback({ text }, file.name);
+    callback({ matrix: await readXlsxMatrix(file) }, file.name);
   } catch (error) {
     callback({ error: error.message }, file.name);
   }
 }
 
-function downloadText(filename, text) {
-  const blob = new Blob([text], { type: 'text/csv;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  link.click();
-  URL.revokeObjectURL(url);
-}
-
-function DropZone({ title, state, onText, sampleFilename, sampleText }) {
+function DropZone({ title, state, onText, sampleFilename, sampleSheetName, sampleHeaders, sampleRows }) {
   const valid = state.status === 'valid';
   const invalid = state.status === 'invalid';
 
@@ -44,13 +33,13 @@ function DropZone({ title, state, onText, sampleFilename, sampleText }) {
         <FileUp size={30} />
         <div>
           <h2>{title}</h2>
-          <p>{state.fileName || 'Drop CSV or XLSX here, or choose a file'}</p>
+          <p>{state.fileName || 'Drop XLSX here, or choose a file'}</p>
         </div>
         <label className="secondary-button">
           Choose File
           <input
             type="file"
-            accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             onChange={(event) => {
               const file = event.target.files?.[0];
               if (file) readFile(file, onText);
@@ -72,8 +61,12 @@ function DropZone({ title, state, onText, sampleFilename, sampleText }) {
           </span>
         )}
         {state.status === 'empty' && <span className="muted">Waiting for upload</span>}
-        <button type="button" className="ghost-button" onClick={() => downloadText(sampleFilename, sampleText)}>
-          <Download size={16} /> Sample CSV
+        <button
+          type="button"
+          className="ghost-button"
+          onClick={() => downloadTemplateXlsx(sampleFilename, sampleSheetName, sampleHeaders, sampleRows)}
+        >
+          <Download size={16} /> Template XLSX
         </button>
       </div>
 
@@ -108,15 +101,19 @@ export default function Upload({
           title="BOM Structure"
           state={bomState}
           onText={onBomText}
-          sampleFilename="BOM_Structure_sample.csv"
-          sampleText={sampleBomCsv}
+          sampleFilename="BOM_Structure_template.xlsx"
+          sampleSheetName="BOM Structure"
+          sampleHeaders={BOM_COLUMNS}
+          sampleRows={sampleBomRows}
         />
         <DropZone
           title="Inventory"
           state={inventoryState}
           onText={onInventoryText}
-          sampleFilename="Inventory_sample.csv"
-          sampleText={sampleInventoryCsv}
+          sampleFilename="Inventory_template.xlsx"
+          sampleSheetName="Inventory"
+          sampleHeaders={INVENTORY_COLUMNS}
+          sampleRows={sampleInventoryRows}
         />
       </div>
 
@@ -144,7 +141,7 @@ export default function Upload({
               {bomPreviewRows.length === 0 ? (
                 <tr>
                   <td colSpan={BOM_COLUMNS.length} className="empty-cell">
-                    Upload a valid BOM Structure CSV to preview data.
+                    Upload a valid BOM Structure XLSX to preview data.
                   </td>
                 </tr>
               ) : (
@@ -188,7 +185,7 @@ export default function Upload({
               {inventoryPreviewRows.length === 0 ? (
                 <tr>
                   <td colSpan="2" className="empty-cell">
-                    Upload a valid Inventory CSV to preview data.
+                    Upload a valid Inventory XLSX to preview data.
                   </td>
                 </tr>
               ) : (

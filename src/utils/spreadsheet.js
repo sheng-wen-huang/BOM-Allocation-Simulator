@@ -52,15 +52,15 @@ export function bomTemplateResultsToRows(bomRows, calculation) {
   });
 }
 
-export async function downloadXlsx(filename, rows) {
+async function downloadWorkbookXlsx(filename, sheetName, headers, rows) {
   const { default: ExcelJS } = await import('exceljs');
   const workbook = new ExcelJS.Workbook();
-  const worksheet = workbook.addWorksheet('BOM Allocation Result');
-  worksheet.addRow(BOM_COLUMNS);
+  const worksheet = workbook.addWorksheet(sheetName);
+  worksheet.addRow(headers);
   rows.forEach((row) => worksheet.addRow(row));
 
   worksheet.views = [{ state: 'frozen', ySplit: 1 }];
-  worksheet.columns = BOM_COLUMNS.map((header, index) => {
+  worksheet.columns = headers.map((header, index) => {
     const maxLength = Math.max(
       header.length,
       ...rows.map((row) => String(row[index] ?? '').length),
@@ -79,6 +79,14 @@ export async function downloadXlsx(filename, rows) {
   link.download = filename;
   link.click();
   URL.revokeObjectURL(url);
+}
+
+export function downloadXlsx(filename, rows) {
+  return downloadWorkbookXlsx(filename, 'BOM Allocation Result', BOM_COLUMNS, rows);
+}
+
+export function downloadTemplateXlsx(filename, sheetName, headers, rows) {
+  return downloadWorkbookXlsx(filename, sheetName, headers, rows);
 }
 
 export function datedResultFilename(date = new Date()) {

@@ -113,7 +113,7 @@ export function parseBomMatrix(matrix) {
   const errors = [];
 
   if (matrix.length === 0) {
-    return { rows: [], errors: ['BOM Structure: CSV is empty.'], count: 0 };
+    return { rows: [], errors: ['BOM Structure: spreadsheet is empty.'], count: 0 };
   }
 
   const headerMap = makeHeaderMap(matrix[0]);
@@ -188,7 +188,7 @@ export function parseInventoryMatrix(matrix) {
   const errors = [];
 
   if (matrix.length === 0) {
-    return { rows: [], errors: ['Inventory: CSV is empty.'], count: 0 };
+    return { rows: [], errors: ['Inventory: spreadsheet is empty.'], count: 0 };
   }
 
   const headerMap = makeHeaderMap(matrix[0]);
@@ -227,21 +227,21 @@ export function parseInventoryCsv(text) {
   }
 }
 
-export const sampleBomCsv = [
-  BOM_COLUMNS.join(','),
-  'WH1,KIT-A,COMP-1,10,N,,2,1,,,900',
-  'WH1,KIT-A,COMP-2,20,N,,1,1,,,900',
-  'WH1,KIT-B,COMP-1,10,N,,1,1,,,600',
-  'WH1,KIT-B,COMP-3,20,N,,3,1,,,600',
-  'WH1,KIT-C,COMP-2,10,Y,Fixed reserve,2,1,X,,8',
-  'WH1,KIT-C,COMP-4,20,Y,Fixed reserve,1,1,X,,8',
-  'WH1,KIT-D,COMP-1,10,N,,1,1,,,0',
-].join('\n');
+export const sampleBomRows = [
+  ['WH1', 'KIT-A', 'COMP-1', '10', 'N', '', 2, 1, '', '', 900],
+  ['WH1', 'KIT-A', 'COMP-2', '20', 'N', '', 1, 1, '', '', 900],
+  ['WH1', 'KIT-B', 'COMP-1', '10', 'N', '', 1, 1, '', '', 600],
+  ['WH1', 'KIT-B', 'COMP-3', '20', 'N', '', 3, 1, '', '', 600],
+  ['WH1', 'KIT-C', 'COMP-2', '10', 'Y', 'Fixed reserve', 2, 1, 'X', '', 8],
+  ['WH1', 'KIT-C', 'COMP-4', '20', 'Y', 'Fixed reserve', 1, 1, 'X', '', 8],
+  ['WH1', 'KIT-D', 'COMP-1', '10', 'N', '', 1, 1, '', '', 0],
+];
 
-export const sampleInventoryCsv = [
-  'SKU,Qty',
-  'COMP-1,100',
-  'COMP-2,30',
-  'COMP-3,42',
-  'COMP-4,20',
-].join('\n');
+export const INVENTORY_COLUMNS = ['sku', 'qty'];
+
+export const sampleInventoryRows = [
+  ['COMP-1', 100],
+  ['COMP-2', 30],
+  ['COMP-3', 42],
+  ['COMP-4', 20],
+];
