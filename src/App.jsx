@@ -4,7 +4,7 @@ import Upload from './components/Upload.jsx';
 import Dashboard from './components/Dashboard.jsx';
 import WhatIf from './components/WhatIf.jsx';
 import Export from './components/Export.jsx';
-import { parseBomCsv, parseInventoryCsv } from './engine/parser.js';
+import { parseBomCsv, parseBomMatrix, parseInventoryCsv, parseInventoryMatrix } from './engine/parser.js';
 import { calculateAllocation, applyScenarioOverrides } from './engine/calculator.js';
 
 const tabs = [
@@ -76,8 +76,12 @@ export default function App() {
     [worker],
   );
 
-  const handleBomText = useCallback((text, fileName = '') => {
-    const parsed = parseBomCsv(text);
+  const handleBomText = useCallback((source, fileName = '') => {
+    const parsed = source.error
+      ? { rows: [], errors: [`BOM Structure: ${source.error}`], count: 0 }
+      : source.matrix
+        ? parseBomMatrix(source.matrix)
+        : parseBomCsv(source.text || '');
     setBomState({
       label: 'BOM Structure',
       ...parsed,
@@ -91,8 +95,12 @@ export default function App() {
     setActiveTab('upload');
   }, []);
 
-  const handleInventoryText = useCallback((text, fileName = '') => {
-    const parsed = parseInventoryCsv(text);
+  const handleInventoryText = useCallback((source, fileName = '') => {
+    const parsed = source.error
+      ? { rows: [], errors: [`Inventory: ${source.error}`], count: 0 }
+      : source.matrix
+        ? parseInventoryMatrix(source.matrix)
+        : parseInventoryCsv(source.text || '');
     setInventoryState({
       label: 'Inventory',
       ...parsed,

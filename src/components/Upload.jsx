@@ -1,10 +1,19 @@
 import { CheckCircle2, Download, FileUp, Play, XCircle } from 'lucide-react';
 import { BOM_COLUMNS, sampleBomCsv, sampleInventoryCsv } from '../engine/parser.js';
+import { readXlsxMatrix } from '../utils/spreadsheet.js';
 
-function readFile(file, callback) {
-  const reader = new FileReader();
-  reader.onload = () => callback(String(reader.result || ''), file.name);
-  reader.readAsText(file);
+async function readFile(file, callback) {
+  try {
+    if (file.name.toLowerCase().endsWith('.xlsx')) {
+      callback({ matrix: await readXlsxMatrix(file) }, file.name);
+      return;
+    }
+
+    const text = await file.text();
+    callback({ text }, file.name);
+  } catch (error) {
+    callback({ error: error.message }, file.name);
+  }
 }
 
 function downloadText(filename, text) {
@@ -35,13 +44,13 @@ function DropZone({ title, state, onText, sampleFilename, sampleText }) {
         <FileUp size={30} />
         <div>
           <h2>{title}</h2>
-          <p>{state.fileName || 'Drop CSV here or choose a file'}</p>
+          <p>{state.fileName || 'Drop CSV or XLSX here, or choose a file'}</p>
         </div>
         <label className="secondary-button">
-          Choose CSV
+          Choose File
           <input
             type="file"
-            accept=".csv,text/csv"
+            accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             onChange={(event) => {
               const file = event.target.files?.[0];
               if (file) readFile(file, onText);

@@ -1,0 +1,86 @@
+import { BOM_COLUMNS } from '../engine/parser.js';
+
+function cellToValue(value) {
+  if (value === null || value === undefined) return '';
+  if (value instanceof Date) return value.toISOString().slice(0, 10);
+  if (typeof value !== 'object') return value;
+  if (Object.prototype.hasOwnProperty.call(value, 'result')) return cellToValue(value.result);
+  if (Object.prototype.hasOwnProperty.call(value, 'text')) return cellToValue(value.text);
+  if (Array.isArray(value.richText)) return value.richText.map((part) => part.text || '').join('');
+  return String(value);
+}
+
+export async function readXlsxMatrix(file) {
+  const { default: ExcelJS } = await import('exceljs');
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(await file.arrayBuffer());
+  const worksheet = workbook.worksheets[0];
+  if (!worksheet) return [];
+
+  const matrix = [];
+  worksheet.eachRow({ includeEmpty: false }, (row) => {
+    const values = [];
+    for (let column = 1; column <= row.cellCount; column += 1) {
+      values.push(cellToValue(row.getCell(column).value));
+    }
+    if (values.some((value) => String(value ?? '').trim() !== '')) {
+      matrix.push(values);
+    }
+  });
+  return matrix;
+}
+
+export function bomTemplateResultsToRows(bomRows, calculation) {
+  const resultByParent = new Map((calculation?.results || []).map((row) => [row.parentSku, row]));
+  return bomRows.map((row) => {
+    const result = resultByParent.get(row.parentSku);
+    const isFixed = result?.mode === 'X';
+    const udf03 = isFixed ? result?.availSoh : result?.priorityScore;
+    return [
+      row.storerkey,
+      row.parentSku,
+      row.componentSku,
+      row.sequence,
+      row.bomonly,
+      row.notes,
+      row.raw?.qty ?? row.qtyPerBom,
+      row.parentqty,
+      isFixed ? 'X' : '',
+      row.udf02,
+      udf03 ?? '',
+    ];
+  });
+}
+
+export async function downloadXlsx(filename, rows) {
+  const { default: ExcelJS } = await import('exceljs');
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet('BOM Allocation Result');
+  worksheet.addRow(BOM_COLUMNS);
+  rows.forEach((row) => worksheet.addRow(row));
+
+  worksheet.views = [{ state: 'frozen', ySplit: 1 }];
+  worksheet.columns = BOM_COLUMNS.map((header, index) => {
+    const maxLength = Math.max(
+      header.length,
+      ...rows.map((row) => String(row[index] ?? '').length),
+    );
+    return { width: Math.min(Math.max(maxLength + 2, 10), 32) };
+  });
+  worksheet.getRow(1).font = { bold: true };
+
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+export function datedResultFilename(date = new Date()) {
+  return `BOM_Allocation_Result_${date.toISOString().slice(0, 10)}.xlsx`;
+}

@@ -6,11 +6,11 @@ Live site: https://sheng-wen-huang.github.io/BOM-Allocation-Simulator/
 
 ## Features
 
-- Upload and preview full BOM and inventory CSV files.
+- Upload and preview full BOM and inventory `.csv` or `.xlsx` files.
 - Run baseline allocation results in the dashboard.
 - Adjust inventory, priority, and `UDF01=X` fixed mode in the What-If Simulator.
 - What-If results recalculate automatically after edits.
-- Export results back into the BOM template column format.
+- Export results as `.xlsx` in the BOM template column format.
 - Dark mode UI.
 
 ## Run Locally
@@ -27,7 +27,9 @@ npm test
 npm run build
 ```
 
-## BOM CSV Template
+## BOM Template
+
+Uploads can be `.csv` or `.xlsx`. For `.xlsx` files, the app reads the first worksheet.
 
 Required for calculation: `sku`, `componentsku`, `qty`.
 
@@ -50,7 +52,9 @@ Legacy aliases are also accepted for compatibility:
 - `ParentSKU` -> `sku`
 - `QtyPerBOM` -> `qty`
 
-## Inventory CSV Template
+## Inventory Template
+
+Uploads can be `.csv` or `.xlsx`. For `.xlsx` files, the app reads the first worksheet.
 
 The app accepts either English or warehouse-export column names:
 
@@ -76,7 +80,7 @@ Priority adjustments are limited from `0` to `1000`.
 
 ## Export
 
-Exported CSV uses the BOM template columns:
+Export downloads an `.xlsx` workbook using the BOM template columns:
 
 ```csv
 storerkey,sku,componentsku,sequence,bomonly,notes,qty,parentqty,udf01,udf02,udf03

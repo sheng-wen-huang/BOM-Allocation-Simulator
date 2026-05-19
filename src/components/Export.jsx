@@ -1,9 +1,10 @@
 import { Download } from 'lucide-react';
-import { bomTemplateResultsToCsv, datedResultFilename, downloadCsv } from '../utils/csv.js';
+import { bomTemplateResultsToRows, datedResultFilename, downloadXlsx } from '../utils/spreadsheet.js';
+import { BOM_COLUMNS } from '../engine/parser.js';
 
 export default function Export({ bomRows, calculation, sourceLabel }) {
-  const csvText = bomTemplateResultsToCsv(bomRows, calculation);
-  const preview = csvText.split('\n').slice(0, 11);
+  const rows = bomTemplateResultsToRows(bomRows, calculation);
+  const preview = [BOM_COLUMNS, ...rows].slice(0, 11);
   const filename = datedResultFilename();
 
   return (
@@ -14,13 +15,13 @@ export default function Export({ bomRows, calculation, sourceLabel }) {
             <h2>Export Results</h2>
             <p>{filename} - {sourceLabel}</p>
           </div>
-          <button type="button" className="primary-button" onClick={() => downloadCsv(filename, csvText)}>
-            <Download size={16} /> Download CSV
+          <button type="button" className="primary-button" onClick={() => downloadXlsx(filename, rows)}>
+            <Download size={16} /> Download XLSX
           </button>
         </div>
         <div className="export-preview">
           {preview.map((line, index) => (
-            <code key={`${line}-${index}`}>{line}</code>
+            <code key={`${line.join('|')}-${index}`}>{line.join(' | ')}</code>
           ))}
         </div>
       </section>

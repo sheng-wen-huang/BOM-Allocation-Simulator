@@ -85,7 +85,7 @@ export function parseCsv(text) {
 function makeHeaderMap(header) {
   const map = new Map();
   header.forEach((column, index) => {
-    map.set(column.trim().toLowerCase(), index);
+    map.set(String(column ?? '').trim().toLowerCase(), index);
   });
   return map;
 }
@@ -109,15 +109,8 @@ function parseNumber(value) {
   return Number.isFinite(number) ? number : Number.NaN;
 }
 
-export function parseBomCsv(text) {
+export function parseBomMatrix(matrix) {
   const errors = [];
-  let matrix = [];
-
-  try {
-    matrix = parseCsv(text);
-  } catch (error) {
-    return { rows: [], errors: [error.message], count: 0 };
-  }
 
   if (matrix.length === 0) {
     return { rows: [], errors: ['BOM Structure: CSV is empty.'], count: 0 };
@@ -183,15 +176,16 @@ export function parseBomCsv(text) {
   return { rows: errors.length ? [] : rows, errors, count: rows.length };
 }
 
-export function parseInventoryCsv(text) {
-  const errors = [];
-  let matrix = [];
-
+export function parseBomCsv(text) {
   try {
-    matrix = parseCsv(text);
+    return parseBomMatrix(parseCsv(text));
   } catch (error) {
     return { rows: [], errors: [error.message], count: 0 };
   }
+}
+
+export function parseInventoryMatrix(matrix) {
+  const errors = [];
 
   if (matrix.length === 0) {
     return { rows: [], errors: ['Inventory: CSV is empty.'], count: 0 };
@@ -223,6 +217,14 @@ export function parseInventoryCsv(text) {
   });
 
   return { rows: errors.length ? [] : rows, errors, count: rows.length };
+}
+
+export function parseInventoryCsv(text) {
+  try {
+    return parseInventoryMatrix(parseCsv(text));
+  } catch (error) {
+    return { rows: [], errors: [error.message], count: 0 };
+  }
 }
 
 export const sampleBomCsv = [

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { applyScenarioOverrides, calculateAllocation } from '../engine/calculator.js';
 import { parseBomCsv, parseInventoryCsv } from '../engine/parser.js';
-import { bomTemplateResultsToCsv } from '../utils/csv.js';
+import { bomTemplateResultsToRows } from '../utils/spreadsheet.js';
 
 function rows(bomCsv, inventoryCsv) {
   const bom = parseBomCsv(bomCsv);
@@ -186,10 +186,9 @@ describe('calculateAllocation', () => {
     );
     const calculation = calculateAllocation(bomRows, inventoryRows);
 
-    const csv = bomTemplateResultsToCsv(bomRows, calculation).split('\n');
-
-    expect(csv[0]).toBe('storerkey,sku,componentsku,sequence,bomonly,notes,qty,parentqty,udf01,udf02,udf03');
-    expect(csv[1]).toBe('WH1,KIT-X,COMP-1,10,Y,Reserve,2,1,X,,4');
-    expect(csv[2]).toBe('WH1,KIT-P,COMP-1,20,N,Priority,1,1,,,500');
+    expect(bomTemplateResultsToRows(bomRows, calculation)).toEqual([
+      ['WH1', 'KIT-X', 'COMP-1', '10', 'Y', 'Reserve', '2', '1', 'X', '', 4],
+      ['WH1', 'KIT-P', 'COMP-1', '20', 'N', 'Priority', '1', '1', '', '', 500],
+    ]);
   });
 });
