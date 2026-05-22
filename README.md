@@ -40,6 +40,8 @@ Calculation controls:
 - `udf01`: use `X` for fixed reservation mode.
 - `udf03`: priority for normal waterfall mode, or requested reservation quantity when `udf01=X`.
 
+`UDF01=X` BOMs reserve inventory first, in `udf03` descending order and then `sku` ascending order. Each fixed BOM receives the actual reservable quantity from the remaining inventory pool before normal waterfall allocation starts.
+
 ```text
 storerkey,sku,componentsku,sequence,bomonly,notes,qty,parentqty,udf01,udf02,udf03
 WH1,KIT-A,COMP-1,10,N,,2,1,,,900

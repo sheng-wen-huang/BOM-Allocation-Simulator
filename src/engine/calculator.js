@@ -34,7 +34,8 @@ function normalizeBomGroups(bomRows) {
     const rowIsFixed = row.udf01?.trim().toUpperCase() === 'X';
     if (rowIsFixed) {
       group.isFixed = true;
-      if (Number.isFinite(row.udf03)) group.reservationRequest = Math.max(0, row.udf03);
+      group.reservationRequest = validPriority(row.udf03);
+      group.priorityScore = group.reservationRequest;
     } else if (!group.isFixed) {
       group.priorityScore = validPriority(row.udf03);
     }
@@ -78,9 +79,15 @@ export function calculateAllocation(bomRows, inventoryRows) {
   const results = [];
   const detailByParent = {};
 
-  const fixedGroups = groups.filter((group) => group.isFixed);
+  const fixedGroups = groups
+    .filter((group) => group.isFixed)
+    .sort((a, b) => {
+      if (a.reservationRequest !== b.reservationRequest) return b.reservationRequest - a.reservationRequest;
+      return a.parentSku.localeCompare(b.parentSku);
+    });
   fixedGroups.forEach((group) => {
-    const max = theoreticalMax(group, fullInventory);
+    const inventoryBeforeReservation = new Map(inventoryPool);
+    const max = theoreticalMax(group, inventoryBeforeReservation);
     const actualReservation = Math.min(group.reservationRequest, max);
 
     group.components.forEach((component) => {
@@ -97,6 +104,7 @@ export function calculateAllocation(bomRows, inventoryRows) {
       capped: group.reservationRequest > actualReservation,
       components: group.components.map((component) => ({
         ...component,
+        inventoryAvailable: getInventory(inventoryBeforeReservation, component.componentSku),
         consumed: component.qtyPerBom * actualReservation,
       })),
     };
@@ -109,7 +117,7 @@ export function calculateAllocation(bomRows, inventoryRows) {
       bottleneck: findBottleneck(
         group.components.map((component) => ({
           componentSku: component.componentSku,
-          yield: Math.floor(getInventory(fullInventory, component.componentSku) / component.qtyPerBom),
+          yield: Math.floor(getInventory(inventoryBeforeReservation, component.componentSku) / component.qtyPerBom),
         })),
       ),
     });

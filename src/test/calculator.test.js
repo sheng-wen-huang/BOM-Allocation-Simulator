@@ -102,6 +102,42 @@ describe('calculateAllocation', () => {
     expect(resultBySku(result, 'KIT-X').availSoh).toBe(3);
   });
 
+  it('reserves fixed BOMs sequentially by UDF03 desc then SKU asc', () => {
+    const [bomRows, inventoryRows] = rows(
+      [
+        'ParentSKU,ComponentSKU,QtyPerBOM,UDF01,UDF03',
+        'KIT-B,COMP-1,1,X,8',
+        'KIT-A,COMP-1,1,X,8',
+        'KIT-C,COMP-1,1,X,3',
+      ].join('\n'),
+      ['SKU,Qty', 'COMP-1,10'].join('\n'),
+    );
+
+    const result = calculateAllocation(bomRows, inventoryRows);
+
+    expect(resultBySku(result, 'KIT-A').availSoh).toBe(8);
+    expect(resultBySku(result, 'KIT-B').availSoh).toBe(2);
+    expect(resultBySku(result, 'KIT-C').availSoh).toBe(0);
+    expect(result.remainingInventory['COMP-1']).toBe(0);
+  });
+
+  it('uses fixed reservations before waterfall allocation', () => {
+    const [bomRows, inventoryRows] = rows(
+      [
+        'ParentSKU,ComponentSKU,QtyPerBOM,UDF01,UDF03',
+        'KIT-X,COMP-1,1,X,4',
+        'KIT-W,COMP-1,1,,900',
+      ].join('\n'),
+      ['SKU,Qty', 'COMP-1,5'].join('\n'),
+    );
+
+    const result = calculateAllocation(bomRows, inventoryRows);
+
+    expect(resultBySku(result, 'KIT-X').availSoh).toBe(4);
+    expect(resultBySku(result, 'KIT-X').priorityScore).toBe(4);
+    expect(resultBySku(result, 'KIT-W').availSoh).toBe(1);
+  });
+
   it('assigns invalid or zero priority BOMs to zero without consuming inventory', () => {
     const [bomRows, inventoryRows] = rows(
       [
