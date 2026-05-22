@@ -4,7 +4,7 @@ import { BOM_COLUMNS } from '../engine/parser.js';
 
 export default function Export({ bomRows, calculation, sourceLabel }) {
   const rows = bomTemplateResultsToRows(bomRows, calculation);
-  const preview = [BOM_COLUMNS, ...rows].slice(0, 11);
+  const preview = [BOM_COLUMNS, ...rows];
   const filename = datedResultFilename();
 
   return (
