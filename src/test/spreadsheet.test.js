@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import ExcelJS from 'exceljs';
-import { readXlsxMatrix } from '../utils/spreadsheet.js';
+import { readXlsxMatrix, XLSX_LIMITS } from '../utils/spreadsheet.js';
 
 function toArrayBuffer(buffer) {
   return buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
@@ -22,5 +22,19 @@ describe('spreadsheet utilities', () => {
       ['sku', 'componentsku', 'qty'],
       ['KIT-A', 'COMP-1', 2],
     ]);
+  });
+
+  it('rejects worksheets that exceed the column limit', async () => {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('BOM');
+    worksheet.addRow(Array.from({ length: XLSX_LIMITS.maxColumns + 1 }, (_, index) => `column-${index + 1}`));
+
+    const buffer = await workbook.xlsx.writeBuffer();
+
+    await expect(
+      readXlsxMatrix({
+        arrayBuffer: async () => toArrayBuffer(buffer),
+      }),
+    ).rejects.toThrow('column limit');
   });
 });

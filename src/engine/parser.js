@@ -27,60 +27,12 @@ const BOM_COLUMN_ALIASES = {
 };
 
 const INVENTORY_COLUMN_ALIASES = {
-  sku: ['sku', '產品名稱'],
+  sku: ['sku', 'componentsku', '產品編號'],
   qty: ['qty', 'e208-ec倉'],
 };
 
 const REQUIRED_BOM_COLUMNS = ['sku', 'componentsku', 'qty'];
 const REQUIRED_INVENTORY_COLUMNS = ['sku', 'qty'];
-
-export function parseCsv(text) {
-  const rows = [];
-  let row = [];
-  let field = '';
-  let inQuotes = false;
-
-  for (let i = 0; i < text.length; i += 1) {
-    const char = text[i];
-    const next = text[i + 1];
-
-    if (char === '"') {
-      if (inQuotes && next === '"') {
-        field += '"';
-        i += 1;
-      } else {
-        inQuotes = !inQuotes;
-      }
-      continue;
-    }
-
-    if (char === ',' && !inQuotes) {
-      row.push(field);
-      field = '';
-      continue;
-    }
-
-    if ((char === '\n' || char === '\r') && !inQuotes) {
-      if (char === '\r' && next === '\n') i += 1;
-      row.push(field);
-      if (row.some((value) => value.trim() !== '')) rows.push(row);
-      row = [];
-      field = '';
-      continue;
-    }
-
-    field += char;
-  }
-
-  row.push(field);
-  if (row.some((value) => value.trim() !== '')) rows.push(row);
-
-  if (inQuotes) {
-    throw new Error('CSV contains an unclosed quoted field.');
-  }
-
-  return rows;
-}
 
 function makeHeaderMap(header) {
   const map = new Map();
@@ -176,14 +128,6 @@ export function parseBomMatrix(matrix) {
   return { rows: errors.length ? [] : rows, errors, count: rows.length };
 }
 
-export function parseBomCsv(text) {
-  try {
-    return parseBomMatrix(parseCsv(text));
-  } catch (error) {
-    return { rows: [], errors: [error.message], count: 0 };
-  }
-}
-
 export function parseInventoryMatrix(matrix) {
   const errors = [];
 
@@ -219,14 +163,6 @@ export function parseInventoryMatrix(matrix) {
   return { rows: errors.length ? [] : rows, errors, count: rows.length };
 }
 
-export function parseInventoryCsv(text) {
-  try {
-    return parseInventoryMatrix(parseCsv(text));
-  } catch (error) {
-    return { rows: [], errors: [error.message], count: 0 };
-  }
-}
-
 export const sampleBomRows = [
   ['WH1', 'KIT-A', 'COMP-1', '10', 'N', '', 2, 1, '', '', 900],
   ['WH1', 'KIT-A', 'COMP-2', '20', 'N', '', 1, 1, '', '', 900],
@@ -237,7 +173,7 @@ export const sampleBomRows = [
   ['WH1', 'KIT-D', 'COMP-1', '10', 'N', '', 1, 1, '', '', 0],
 ];
 
-export const INVENTORY_COLUMNS = ['sku', 'qty'];
+export const INVENTORY_COLUMNS = ['ComponentSKU', 'qty'];
 
 export const sampleInventoryRows = [
   ['COMP-1', 100],

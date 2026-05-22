@@ -3,11 +3,17 @@ import { Fragment, useMemo, useState } from 'react';
 
 const columns = [
   ['parentSku', 'SKU'],
-  ['priorityScore', 'Priority'],
+  ['priorityScore', 'Priority/ReservedQty'],
   ['availSoh', 'AvailSOH'],
   ['mode', 'Mode'],
   ['bottleneck', 'Bottleneck'],
 ];
+
+function matchesSkuOrComponent(row, detail, query) {
+  if (!query) return true;
+  if (row.parentSku.toLowerCase().includes(query)) return true;
+  return (detail?.components || []).some((component) => component.componentSku.toLowerCase().includes(query));
+}
 
 function ModeBadge({ mode }) {
   return <span className={`mode-badge ${mode.toLowerCase()}`}>{mode}</span>;
@@ -100,8 +106,9 @@ export default function Dashboard({ calculation }) {
   }, [calculation.results]);
 
   const rows = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
     const filtered = calculation.results.filter((row) =>
-      row.parentSku.toLowerCase().includes(query.trim().toLowerCase()),
+      matchesSkuOrComponent(row, calculation.details[row.parentSku], normalizedQuery),
     );
     return filtered.sort((a, b) => {
       const left = a[sort.key];
@@ -112,7 +119,7 @@ export default function Dashboard({ calculation }) {
           : String(left).localeCompare(String(right));
       return sort.direction === 'asc' ? result : -result;
     });
-  }, [calculation.results, query, sort]);
+  }, [calculation.details, calculation.results, query, sort]);
 
   function toggleSort(key) {
     setSort((current) => ({
@@ -142,7 +149,7 @@ export default function Dashboard({ calculation }) {
             className="search-input"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search SKU"
+            placeholder="Search SKU or ComponentSKU"
           />
         </div>
         <div className="table-wrap results-table-wrap">

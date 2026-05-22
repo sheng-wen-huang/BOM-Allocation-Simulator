@@ -9,10 +9,14 @@ function uniqueParents(bomRows) {
         parentSku: row.parentSku,
         priority: row.udf03 ?? 0,
         fixed: row.udf01?.trim().toUpperCase() === 'X',
+        componentSkus: new Set(),
       });
     }
+    map.get(row.parentSku).componentSkus.add(row.componentSku);
   });
-  return Array.from(map.values()).sort((a, b) => a.parentSku.localeCompare(b.parentSku));
+  return Array.from(map.values())
+    .map((row) => ({ ...row, componentSkus: Array.from(row.componentSkus).sort() }))
+    .sort((a, b) => a.parentSku.localeCompare(b.parentSku));
 }
 
 function aggregateInventory(inventoryRows) {
@@ -49,6 +53,12 @@ function clampNumber(value, min, max = Infinity) {
   return Math.min(max, Math.max(min, number));
 }
 
+function matchesSkuOrComponent(row, query) {
+  if (!query) return true;
+  if (row.parentSku.toLowerCase().includes(query)) return true;
+  return row.componentSkus.some((componentSku) => componentSku.toLowerCase().includes(query));
+}
+
 export default function WhatIf({
   bomRows,
   inventoryRows,
@@ -68,7 +78,7 @@ export default function WhatIf({
   const normalizedFilter = filter.trim().toLowerCase();
 
   const visibleInventory = inventory.filter((row) => row.sku.toLowerCase().includes(normalizedFilter)).slice(0, 80);
-  const visibleParents = parents.filter((row) => row.parentSku.toLowerCase().includes(normalizedFilter)).slice(0, 80);
+  const visibleParents = parents.filter((row) => matchesSkuOrComponent(row, normalizedFilter)).slice(0, 80);
   const hasScenarioChanges =
     Object.keys(inventoryQty).length > 0 || Object.keys(priority).length > 0 || Object.keys(fixedMode).length > 0;
 
@@ -140,7 +150,7 @@ export default function WhatIf({
           className="search-input full"
           value={filter}
           onChange={(event) => updateScenario({ filter: event.target.value })}
-          placeholder="Filter SKU"
+          placeholder="Filter SKU or ComponentSKU"
         />
 
         <h3>Inventory Adjustments</h3>
@@ -173,7 +183,7 @@ export default function WhatIf({
           })}
         </div>
 
-        <h3>Priority & UDF01</h3>
+        <h3>UDF01 & Priority/ReservedQty</h3>
         <div className="adjustment-list">
           {visibleParents.map((row) => {
             const priorityChanged = Object.prototype.hasOwnProperty.call(priority, row.parentSku);
@@ -242,7 +252,7 @@ export default function WhatIf({
             <thead>
               <tr>
                 <th>SKU</th>
-                <th>Priority</th>
+                <th>Priority/ReservedQty</th>
                 <th>Before AvailSOH</th>
                 <th>After AvailSOH</th>
                 <th>Delta</th>

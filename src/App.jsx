@@ -144,7 +144,7 @@ export default function App() {
 
   const currentTab = calculation ? activeTab : activeTab === 'upload' ? activeTab : 'upload';
   const exportCalculation = whatIfCalculation || calculation;
-  const exportSourceLabel = whatIfCalculation ? 'Latest What-If result' : 'Baseline result';
+  const exportSourceLabel = whatIfCalculation ? 'What-If result' : 'Baseline result';
 
   return (
     <div className="app-shell">

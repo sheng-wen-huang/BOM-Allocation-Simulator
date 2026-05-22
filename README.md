@@ -1,17 +1,16 @@
 # BOM Allocation Simulator
 
-Client-side React app for simulating BOM available stock on hand with fixed reservations and waterfall priority allocation.
-
-Live site: https://sheng-wen-huang.github.io/BOM-Allocation-Simulator/
+Client-side React application for simulating BOM available stock on hand with fixed reservations and waterfall priority allocation.
 
 ## Features
 
-- Upload and preview full BOM and inventory `.xlsx` files.
+- Upload and preview BOM and inventory `.xlsx` files.
+- Download `.xlsx` templates for BOM and inventory input.
 - Run baseline allocation results in the dashboard.
 - Adjust inventory, priority, and `UDF01=X` fixed mode in the What-If Simulator.
-- What-If results recalculate automatically after edits.
-- Export results as `.xlsx` in the BOM template column format.
-- Dark mode UI.
+- Recalculate What-If results automatically after edits.
+- Export results as `.xlsx` using the BOM template column format.
+- Process all uploaded data locally in the browser.
 
 ## Run Locally
 
@@ -20,16 +19,39 @@ npm install
 npm run dev
 ```
 
+Open the local URL printed by the terminal.
+
 ## Validate
 
 ```bash
+npm audit
 npm test
 npm run build
 ```
 
+## Cloudflare Pages
+
+Recommended deployment settings:
+
+```text
+Build command: npm ci && npm run build
+Build output directory: dist
+Root directory: /
+Node.js version: 22
+```
+
+The project includes `src/public/_headers`, which is copied into `dist/_headers` during build so Cloudflare Pages can apply security headers.
+
+## Upload Limits
+
+- File type: `.xlsx`
+- Maximum file size: 10 MB
+- Maximum worksheet rows: 10,000
+- Maximum worksheet columns: 50
+
 ## BOM Template
 
-Uploads must be `.xlsx`. The app reads the first worksheet.
+The app reads the first worksheet in the uploaded `.xlsx` file.
 
 Required for calculation: `sku`, `componentsku`, `qty`.
 
@@ -49,16 +71,16 @@ WH1,KIT-A,COMP-2,20,N,,1,1,,,900
 WH1,KIT-C,COMP-2,10,Y,Fixed reserve,2,1,X,,8
 ```
 
-Legacy column aliases are also accepted for compatibility:
+Accepted BOM column aliases:
 
 - `ParentSKU` -> `sku`
 - `QtyPerBOM` -> `qty`
 
 ## Inventory Template
 
-Uploads must be `.xlsx`. The app reads the first worksheet.
+The app reads the first worksheet in the uploaded `.xlsx` file.
 
-The app accepts either English or warehouse-export column names:
+Accepted inventory column names:
 
 ```text
 sku,qty
@@ -67,7 +89,13 @@ COMP-2,30
 ```
 
 ```text
-產品名稱,E208-EC倉
+ComponentSKU,qty
+COMP-1,100
+COMP-2,30
+```
+
+```text
+產品編號,E208-EC倉
 COMP-1,100
 COMP-2,30
 ```
@@ -88,7 +116,7 @@ Export downloads an `.xlsx` workbook using the BOM template columns:
 storerkey,sku,componentsku,sequence,bomonly,notes,qty,parentqty,udf01,udf02,udf03
 ```
 
-Export values reflect the latest What-If result when one exists. Otherwise, export uses the baseline result.
+Export values reflect the selected result set.
 
 - `udf01` exports `X` for fixed mode and blank for non-fixed mode.
 - `udf03` exports after `AvailSOH` for fixed mode, or priority for non-fixed mode.

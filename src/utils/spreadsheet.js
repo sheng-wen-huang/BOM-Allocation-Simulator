@@ -1,5 +1,11 @@
 import { BOM_COLUMNS } from '../engine/parser.js';
 
+export const XLSX_LIMITS = {
+  maxFileSizeBytes: 10 * 1024 * 1024,
+  maxRows: 10000,
+  maxColumns: 50,
+};
+
 function cellToValue(value) {
   if (value === null || value === undefined) return '';
   if (value instanceof Date) return value.toISOString().slice(0, 10);
@@ -16,6 +22,14 @@ export async function readXlsxMatrix(file) {
   await workbook.xlsx.load(await file.arrayBuffer());
   const worksheet = workbook.worksheets[0];
   if (!worksheet) return [];
+
+  if (worksheet.actualRowCount > XLSX_LIMITS.maxRows) {
+    throw new Error(`XLSX row count exceeds the ${XLSX_LIMITS.maxRows.toLocaleString()} row limit.`);
+  }
+
+  if (worksheet.actualColumnCount > XLSX_LIMITS.maxColumns) {
+    throw new Error(`XLSX column count exceeds the ${XLSX_LIMITS.maxColumns.toLocaleString()} column limit.`);
+  }
 
   const matrix = [];
   worksheet.eachRow({ includeEmpty: false }, (row) => {

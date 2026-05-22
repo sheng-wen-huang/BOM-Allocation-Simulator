@@ -1,11 +1,17 @@
 import { CheckCircle2, Download, FileUp, Play, XCircle } from 'lucide-react';
 import { BOM_COLUMNS, INVENTORY_COLUMNS, sampleBomRows, sampleInventoryRows } from '../engine/parser.js';
-import { downloadTemplateXlsx, readXlsxMatrix } from '../utils/spreadsheet.js';
+import { downloadTemplateXlsx, readXlsxMatrix, XLSX_LIMITS } from '../utils/spreadsheet.js';
 
 async function readFile(file, callback) {
   try {
     if (!file.name.toLowerCase().endsWith('.xlsx')) {
       callback({ error: 'Only .xlsx files are supported.' }, file.name);
+      return;
+    }
+
+    if (file.size > XLSX_LIMITS.maxFileSizeBytes) {
+      const maxSizeMb = XLSX_LIMITS.maxFileSizeBytes / 1024 / 1024;
+      callback({ error: `XLSX file size must be ${maxSizeMb} MB or less.` }, file.name);
       return;
     }
 
@@ -177,7 +183,7 @@ export default function Upload({
           <table>
             <thead>
               <tr>
-                <th>sku</th>
+                <th>ComponentSKU</th>
                 <th>qty</th>
               </tr>
             </thead>

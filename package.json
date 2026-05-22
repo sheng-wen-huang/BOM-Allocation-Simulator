@@ -1,6 +1,6 @@
 {
   "name": "bom-allocation-simulator",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -19,5 +19,8 @@
   },
   "devDependencies": {
     "vitest": "3.2.4"
+  },
+  "overrides": {
+    "uuid": "11.1.1"
   }
 }
