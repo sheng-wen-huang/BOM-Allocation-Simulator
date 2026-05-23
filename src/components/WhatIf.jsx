@@ -33,8 +33,7 @@ function buildComparisonRows(result, baseline) {
     .map((row) => {
       const before = baselineMap.get(row.parentSku)?.availSoh || 0;
       return { ...row, beforeAvailSoh: before, afterAvailSoh: row.availSoh, delta: row.availSoh - before };
-    })
-    .sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta) || a.parentSku.localeCompare(b.parentSku));
+    });
 }
 
 function sohClass(value) {
@@ -59,6 +58,17 @@ function matchesSkuOrComponent(row, query) {
   return row.componentSkus.some((componentSku) => componentSku.toLowerCase().includes(query));
 }
 
+function sortComparisonRows(rows, key, direction) {
+  const sorted = [...rows].sort((a, b) => {
+    if (key === 'delta') return Math.abs(a.delta) - Math.abs(b.delta) || a.parentSku.localeCompare(b.parentSku);
+    const left = a[key];
+    const right = b[key];
+    if (typeof left === 'number' && typeof right === 'number') return left - right;
+    return String(left).localeCompare(String(right));
+  });
+  return direction === 'asc' ? sorted : sorted.reverse();
+}
+
 export default function WhatIf({
   bomRows,
   inventoryRows,
@@ -70,7 +80,15 @@ export default function WhatIf({
 }) {
   const [isRunning, setIsRunning] = useState(false);
   const [error, setError] = useState('');
-  const { filter, inventoryQty, priority, fixedMode, comparison } = scenario;
+  const {
+    filter,
+    inventoryQty,
+    priority,
+    fixedMode,
+    comparison,
+    comparisonSortKey,
+    comparisonSortDirection,
+  } = scenario;
 
   const inventory = useMemo(() => aggregateInventory(inventoryRows), [inventoryRows]);
   const parents = useMemo(() => uniqueParents(bomRows), [bomRows]);
@@ -79,6 +97,10 @@ export default function WhatIf({
 
   const visibleInventory = inventory.filter((row) => row.sku.toLowerCase().includes(normalizedFilter)).slice(0, 80);
   const visibleParents = parents.filter((row) => matchesSkuOrComponent(row, normalizedFilter)).slice(0, 80);
+  const sortedComparison = useMemo(
+    () => sortComparisonRows(comparison, comparisonSortKey, comparisonSortDirection),
+    [comparison, comparisonSortDirection, comparisonSortKey],
+  );
   const hasScenarioChanges =
     Object.keys(inventoryQty).length > 0 || Object.keys(priority).length > 0 || Object.keys(fixedMode).length > 0;
 
@@ -91,7 +113,14 @@ export default function WhatIf({
     if (!hasScenarioChanges) {
       setIsRunning(false);
       if (comparison.length === 0) {
-        onScenarioChange((current) => ({ ...current, comparison: baselineComparison }));
+        onScenarioChange((current) => ({
+          ...current,
+          comparison: sortComparisonRows(
+            baselineComparison,
+            current.comparisonSortKey,
+            current.comparisonSortDirection,
+          ),
+        }));
       }
       return undefined;
     }
@@ -105,7 +134,14 @@ export default function WhatIf({
         const result = await onRunWhatIf({ inventoryQty, priority, fixedMode });
         if (canceled) return;
 
-        onScenarioChange((current) => ({ ...current, comparison: buildComparisonRows(result, baseline) }));
+        onScenarioChange((current) => ({
+          ...current,
+          comparison: sortComparisonRows(
+            buildComparisonRows(result, baseline),
+            current.comparisonSortKey,
+            current.comparisonSortDirection,
+          ),
+        }));
         onScenarioResult(result);
       } catch (scenarioError) {
         if (!canceled) setError(scenarioError.message);
@@ -132,9 +168,31 @@ export default function WhatIf({
   ]);
 
   function resetAll() {
-    updateScenario({ inventoryQty: {}, priority: {}, fixedMode: {}, comparison: baselineComparison });
+    updateScenario({
+      inventoryQty: {},
+      priority: {},
+      fixedMode: {},
+      comparison: sortComparisonRows(
+        baselineComparison,
+        comparisonSortKey,
+        comparisonSortDirection,
+      ),
+    });
     onScenarioResult(null);
     setError('');
+  }
+
+  function updateComparisonSort(sortKey) {
+    onScenarioChange((current) => {
+      const nextDirection =
+        current.comparisonSortKey === sortKey && current.comparisonSortDirection === 'desc' ? 'asc' : 'desc';
+      return {
+        ...current,
+        comparisonSortKey: sortKey,
+        comparisonSortDirection: nextDirection,
+        comparison: sortComparisonRows(current.comparison, sortKey, nextDirection),
+      };
+    });
   }
 
   return (
@@ -244,7 +302,21 @@ export default function WhatIf({
         <div className="panel-header">
           <div>
             <h2>Before / After Comparison</h2>
-            <p>Rows sorted by largest absolute delta</p>
+            <p>Sort by SKU, Priority/ReservedQty, Before AvailSOH, or After AvailSOH</p>
+          </div>
+          <div className="sort-row">
+            <button type="button" className="sort-button" onClick={() => updateComparisonSort('parentSku')}>
+              Order by SKU
+            </button>
+            <button type="button" className="sort-button" onClick={() => updateComparisonSort('priorityScore')}>
+              Order by Priority/ReservedQty
+            </button>
+            <button type="button" className="sort-button" onClick={() => updateComparisonSort('beforeAvailSoh')}>
+              Order by Before AvailSOH
+            </button>
+            <button type="button" className="sort-button" onClick={() => updateComparisonSort('afterAvailSoh')}>
+              Order by After AvailSOH
+            </button>
           </div>
         </div>
         <div className="table-wrap">
@@ -260,14 +332,14 @@ export default function WhatIf({
               </tr>
             </thead>
             <tbody>
-              {comparison.length === 0 ? (
+              {sortedComparison.length === 0 ? (
                 <tr>
                   <td colSpan="6" className="empty-cell">
                     Adjust a scenario value to compare results.
                   </td>
                 </tr>
               ) : (
-                comparison.map((row) => (
+                sortedComparison.map((row) => (
                   <tr key={row.parentSku} className={row.delta > 0 ? 'delta-up-row' : row.delta < 0 ? 'delta-down-row' : ''}>
                     <td>{row.parentSku}</td>
                     <td>{row.priorityScore}</td>

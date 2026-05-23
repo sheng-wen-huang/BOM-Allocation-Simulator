@@ -19,7 +19,15 @@ function makeEmptyFileState(label) {
 }
 
 function makeEmptyScenarioState() {
-  return { filter: '', inventoryQty: {}, priority: {}, fixedMode: {}, comparison: [] };
+  return {
+    filter: '',
+    inventoryQty: {},
+    priority: {},
+    fixedMode: {},
+    comparison: [],
+    comparisonSortKey: 'delta',
+    comparisonSortDirection: 'desc',
+  };
 }
 
 export default function App() {
@@ -145,6 +153,7 @@ export default function App() {
   const currentTab = calculation ? activeTab : activeTab === 'upload' ? activeTab : 'upload';
   const exportCalculation = whatIfCalculation || calculation;
   const exportSourceLabel = whatIfCalculation ? 'What-If result' : 'Baseline result';
+  const exportOrder = whatIfState.comparison.map((row) => row.parentSku);
 
   return (
     <div className="app-shell">
@@ -200,7 +209,12 @@ export default function App() {
           />
         )}
         {currentTab === 'export' && calculation && (
-          <Export bomRows={bomState.rows} calculation={exportCalculation} sourceLabel={exportSourceLabel} />
+          <Export
+            bomRows={bomState.rows}
+            calculation={exportCalculation}
+            sourceLabel={exportSourceLabel}
+            orderedParentSkus={exportOrder}
+          />
         )}
       </main>
     </div>

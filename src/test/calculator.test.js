@@ -217,7 +217,7 @@ describe('calculateAllocation', () => {
     const parsed = parseBomMatrix(
       [
         ['storerkey', 'sku', 'componentsku', 'sequence', 'bomonly', 'notes', 'qty', 'parentqty', 'udf01', 'udf02', 'udf03'],
-        ['WH1', 'KIT-A', 'COMP-1', '10', 'N', 'Keep this', 2, 1, '', 'blue', 100],
+        ['WH1', 'KIT-A', 'COMP-1', '1', 'N', 'Keep this', 2, 1, '', 'blue', 100],
       ],
     );
 
@@ -226,7 +226,7 @@ describe('calculateAllocation', () => {
       storerkey: 'WH1',
       parentSku: 'KIT-A',
       componentSku: 'COMP-1',
-      sequence: '10',
+      sequence: '1',
       bomonly: 'N',
       notes: 'Keep this',
       qtyPerBom: 2,
@@ -270,8 +270,8 @@ describe('calculateAllocation', () => {
     const [bomRows, inventoryRows] = rows(
       [
         ['storerkey', 'sku', 'componentsku', 'sequence', 'bomonly', 'notes', 'qty', 'parentqty', 'udf01', 'udf02', 'udf03'],
-        ['WH1', 'KIT-X', 'COMP-1', '10', 'Y', 'Reserve', 2, 1, 'X', '', 10],
-        ['WH1', 'KIT-P', 'COMP-1', '20', 'N', 'Priority', 1, 1, '', '', 500],
+        ['WH1', 'KIT-X', 'COMP-1', '1', 'Y', 'Reserve', 2, 1, 'X', '', 10],
+        ['WH1', 'KIT-P', 'COMP-1', '1', 'N', 'Priority', 1, 1, '', '', 500],
       ],
       [
         ['sku', 'qty'],
@@ -281,8 +281,37 @@ describe('calculateAllocation', () => {
     const calculation = calculateAllocation(bomRows, inventoryRows);
 
     expect(bomTemplateResultsToRows(bomRows, calculation)).toEqual([
-      ['WH1', 'KIT-X', 'COMP-1', '10', 'Y', 'Reserve', '2', '1', 'X', '', 10],
-      ['WH1', 'KIT-P', 'COMP-1', '20', 'N', 'Priority', '1', '1', '', '', 500],
+      ['WH1', 'KIT-X', 'COMP-1', '1', 'Y', 'Reserve', '2', '1', 'X', '', 10],
+      ['WH1', 'KIT-P', 'COMP-1', '1', 'N', 'Priority', '1', '1', '', '', 500],
     ]);
+  });
+
+  it('rejects duplicate sequence values under the same sku', () => {
+    const parsed = parseBomMatrix([
+      ['sku', 'componentsku', 'sequence', 'bomonly', 'qty'],
+      ['KIT-A', 'COMP-1', '1', 'N', 1],
+      ['KIT-A', 'COMP-2', '1', 'Y', 1],
+    ]);
+
+    expect(parsed.errors).toContain('BOM Structure SKU KIT-A: sequence cannot be duplicated.');
+  });
+
+  it('rejects non-contiguous sequence values under the same sku', () => {
+    const parsed = parseBomMatrix([
+      ['sku', 'componentsku', 'sequence', 'bomonly', 'qty'],
+      ['KIT-A', 'COMP-1', '1', 'N', 1],
+      ['KIT-A', 'COMP-2', '3', 'Y', 1],
+    ]);
+
+    expect(parsed.errors).toContain('BOM Structure SKU KIT-A: sequence must be 1 to 2 with no gaps.');
+  });
+
+  it('rejects bomonly values other than Y or N', () => {
+    const parsed = parseBomMatrix([
+      ['sku', 'componentsku', 'sequence', 'bomonly', 'qty'],
+      ['KIT-A', 'COMP-1', '1', 'A', 1],
+    ]);
+
+    expect(parsed.errors).toContain('BOM Structure row 2: bomonly must be Y or N.');
   });
 });

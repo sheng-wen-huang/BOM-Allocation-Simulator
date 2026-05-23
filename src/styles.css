@@ -330,9 +330,17 @@ th {
 
 .sort-button {
   min-height: 0;
-  padding: 0;
-  color: inherit;
-  background: transparent;
+  padding: 6px 10px;
+  color: #4a5045;
+  border: 1px solid #d3d9cb;
+  border-radius: 6px;
+  background: #fbfcf8;
+}
+
+.sort-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .clickable-row {
@@ -518,6 +526,7 @@ th {
 .export-preview code {
   display: block;
   min-width: max-content;
+  white-space: pre;
   color: #eef2e8;
   font-family: "SFMono-Regular", Consolas, monospace;
   font-size: 13px;
@@ -648,6 +657,12 @@ tr:hover,
   color: #e6edf3;
   border-color: #30363d;
   background: #0d1117;
+}
+
+.sort-button {
+  color: #e6edf3;
+  border-color: #30363d;
+  background: #21262d;
 }
 
 .mode-badge.x {

@@ -1,5 +1,3 @@
-import { BOM_COLUMNS } from '../engine/parser.js';
-
 export const XLSX_LIMITS = {
   maxFileSizeBytes: 10 * 1024 * 1024,
   maxRows: 10000,

@@ -69,6 +69,8 @@ export function parseBomMatrix(matrix) {
   }
 
   const headerMap = makeHeaderMap(matrix[0]);
+  const hasSequenceColumn = BOM_COLUMN_ALIASES.sequence.some((alias) => headerMap.has(alias));
+  const hasBomOnlyColumn = BOM_COLUMN_ALIASES.bomonly.some((alias) => headerMap.has(alias));
   errors.push(...assertColumns(headerMap, REQUIRED_BOM_COLUMNS, BOM_COLUMN_ALIASES, 'BOM Structure'));
   if (errors.length > 0) return { rows: [], errors, count: 0 };
 
@@ -93,6 +95,9 @@ export function parseBomMatrix(matrix) {
     if (!componentSku) errors.push(`BOM Structure row ${rowNumber}: componentsku is required.`);
     if (!Number.isFinite(qtyPerBom) || qtyPerBom <= 0) {
       errors.push(`BOM Structure row ${rowNumber}: qty must be greater than 0.`);
+    }
+    if (hasBomOnlyColumn && !['N', 'Y'].includes(bomonly.toUpperCase())) {
+      errors.push(`BOM Structure row ${rowNumber}: bomonly must be Y or N.`);
     }
 
     rows.push({
@@ -124,6 +129,42 @@ export function parseBomMatrix(matrix) {
       },
     });
   });
+
+  if (hasSequenceColumn) {
+    const rowsBySku = new Map();
+    rows.forEach((row) => {
+      if (!row.parentSku) return;
+      if (!rowsBySku.has(row.parentSku)) rowsBySku.set(row.parentSku, []);
+      rowsBySku.get(row.parentSku).push(row);
+    });
+
+    rowsBySku.forEach((skuRows, parentSku) => {
+      const parsedSequences = skuRows.map((row) => ({
+        rowNumber: row.rowNumber,
+        sequence: Number(row.sequence),
+      }));
+
+      if (
+        parsedSequences.some((row) => !Number.isInteger(row.sequence) || row.sequence <= 0)
+      ) {
+        errors.push(`BOM Structure SKU ${parentSku}: sequence must be positive integers starting from 1.`);
+        return;
+      }
+
+      const sequenceSet = new Set(parsedSequences.map((row) => row.sequence));
+      if (sequenceSet.size !== parsedSequences.length) {
+        errors.push(`BOM Structure SKU ${parentSku}: sequence cannot be duplicated.`);
+        return;
+      }
+
+      for (let sequence = 1; sequence <= parsedSequences.length; sequence += 1) {
+        if (!sequenceSet.has(sequence)) {
+          errors.push(`BOM Structure SKU ${parentSku}: sequence must be 1 to ${parsedSequences.length} with no gaps.`);
+          return;
+        }
+      }
+    });
+  }
 
   return { rows: errors.length ? [] : rows, errors, count: rows.length };
 }
@@ -164,13 +205,13 @@ export function parseInventoryMatrix(matrix) {
 }
 
 export const sampleBomRows = [
-  ['WH1', 'KIT-A', 'COMP-1', '10', 'N', '', 2, 1, '', '', 900],
-  ['WH1', 'KIT-A', 'COMP-2', '20', 'N', '', 1, 1, '', '', 900],
-  ['WH1', 'KIT-B', 'COMP-1', '10', 'N', '', 1, 1, '', '', 600],
-  ['WH1', 'KIT-B', 'COMP-3', '20', 'N', '', 3, 1, '', '', 600],
-  ['WH1', 'KIT-C', 'COMP-2', '10', 'Y', 'Fixed reserve', 2, 1, 'X', '', 8],
-  ['WH1', 'KIT-C', 'COMP-4', '20', 'Y', 'Fixed reserve', 1, 1, 'X', '', 8],
-  ['WH1', 'KIT-D', 'COMP-1', '10', 'N', '', 1, 1, '', '', 0],
+  ['WH1', 'KIT-A', 'COMP-1', '1', 'N', '', 2, 1, '', '', 900],
+  ['WH1', 'KIT-A', 'COMP-2', '2', 'N', '', 1, 1, '', '', 900],
+  ['WH1', 'KIT-B', 'COMP-1', '1', 'N', '', 1, 1, '', '', 600],
+  ['WH1', 'KIT-B', 'COMP-3', '2', 'N', '', 3, 1, '', '', 600],
+  ['WH1', 'KIT-C', 'COMP-2', '1', 'Y', '', 2, 1, 'X', '', 8],
+  ['WH1', 'KIT-C', 'COMP-4', '2', 'Y', '', 1, 1, 'X', '', 8],
+  ['WH1', 'KIT-D', 'COMP-1', '1', 'N', '', 1, 1, '', '', 0],
 ];
 
 export const INVENTORY_COLUMNS = ['ComponentSKU', 'qty'];

@@ -57,6 +57,11 @@ Required for calculation: `sku`, `componentsku`, `qty`.
 
 Preserved for preview and export: `storerkey`, `sequence`, `bomonly`, `notes`, `parentqty`, `udf02`.
 
+Validation rules:
+
+- For each `sku`, `sequence` must be unique and contiguous from `1` to `N` (no duplicates, no gaps).
+- `bomonly` only accepts `Y` or `N`.
+
 Calculation controls:
 
 - `udf01`: use `X` for fixed reservation mode.
@@ -66,9 +71,9 @@ Calculation controls:
 
 ```text
 storerkey,sku,componentsku,sequence,bomonly,notes,qty,parentqty,udf01,udf02,udf03
-WH1,KIT-A,COMP-1,10,N,,2,1,,,900
-WH1,KIT-A,COMP-2,20,N,,1,1,,,900
-WH1,KIT-C,COMP-2,10,Y,Fixed reserve,2,1,X,,8
+WH1,KIT-A,COMP-1,1,N,,2,1,,,900
+WH1,KIT-A,COMP-2,2,N,,1,1,,,900
+WH1,KIT-C,COMP-2,1,Y,,2,1,X,,8
 ```
 
 Accepted BOM column aliases:
@@ -108,15 +113,18 @@ Priority adjustments are limited from `0` to `1000`.
 
 `Reset All` restores the baseline scenario and keeps the comparison table populated with baseline results.
 
+Before / After Comparison supports ordering by `SKU`, `Priority/ReservedQty`, `Before AvailSOH`, and `After AvailSOH`.
+
 ## Export
 
 Export downloads an `.xlsx` workbook using the BOM template columns:
 
 ```text
-storerkey,sku,componentsku,sequence,bomonly,notes,qty,parentqty,udf01,udf02,udf03
+Storerkey,Sku,ComponentSku,Sequence,BomOnly,Notes,Qty,ParentQty,UDF01,UDF02,UDF03
 ```
 
 Export values reflect the selected result set.
 
 - `udf01` exports `X` for fixed mode and blank for non-fixed mode.
-- `udf03` exports after `AvailSOH` for fixed mode, or priority for non-fixed mode.
+- `udf03` always exports `Priority/ReservedQty` from the What-If or baseline result.
+- Export row ordering follows the current What-If comparison sorting order.
