@@ -2,6 +2,9 @@ export const XLSX_LIMITS = {
   maxFileSizeBytes: 10 * 1024 * 1024,
   maxRows: 10000,
   maxColumns: 50,
+  maxZipEntries: 20000,
+  maxUncompressedBytes: 120 * 1024 * 1024,
+  maxCompressionRatio: 80,
 };
 
 export const EXPORT_COLUMNS = [
@@ -28,10 +31,98 @@ function cellToValue(value) {
   return String(value);
 }
 
+function isZipMagic(bytes) {
+  return bytes.length >= 4 && bytes[0] === 0x50 && bytes[1] === 0x4b && bytes[2] === 0x03 && bytes[3] === 0x04;
+}
+
+function findEocdOffset(bytes) {
+  const minOffset = Math.max(0, bytes.length - 22 - 65535);
+  for (let index = bytes.length - 22; index >= minOffset; index -= 1) {
+    if (
+      bytes[index] === 0x50 &&
+      bytes[index + 1] === 0x4b &&
+      bytes[index + 2] === 0x05 &&
+      bytes[index + 3] === 0x06
+    ) {
+      return index;
+    }
+  }
+  return -1;
+}
+
+function inspectZipSafety(arrayBuffer, fallbackCompressedBytes = 0) {
+  const bytes = new Uint8Array(arrayBuffer);
+  if (!isZipMagic(bytes)) {
+    throw new Error('Invalid XLSX format: file is not a ZIP container.');
+  }
+
+  const view = new DataView(arrayBuffer);
+  const eocdOffset = findEocdOffset(bytes);
+  if (eocdOffset < 0) {
+    throw new Error('Invalid XLSX format: end-of-central-directory record not found.');
+  }
+
+  const totalEntries = view.getUint16(eocdOffset + 10, true);
+  const centralDirectoryOffset = view.getUint32(eocdOffset + 16, true);
+
+  if (totalEntries === 0xffff || centralDirectoryOffset === 0xffffffff) {
+    throw new Error('ZIP64 XLSX files are not supported.');
+  }
+
+  if (totalEntries > XLSX_LIMITS.maxZipEntries) {
+    throw new Error(`XLSX contains too many archive entries (${XLSX_LIMITS.maxZipEntries} max).`);
+  }
+
+  let offset = centralDirectoryOffset;
+  let totalCompressed = 0;
+  let totalUncompressed = 0;
+
+  for (let entryIndex = 0; entryIndex < totalEntries; entryIndex += 1) {
+    if (offset + 46 > view.byteLength) {
+      throw new Error('Invalid XLSX format: central directory record is truncated.');
+    }
+
+    const signature = view.getUint32(offset, true);
+    if (signature !== 0x02014b50) {
+      throw new Error('Invalid XLSX format: central directory signature mismatch.');
+    }
+
+    const compressedSize = view.getUint32(offset + 20, true);
+    const uncompressedSize = view.getUint32(offset + 24, true);
+    const fileNameLength = view.getUint16(offset + 28, true);
+    const extraLength = view.getUint16(offset + 30, true);
+    const commentLength = view.getUint16(offset + 32, true);
+
+    if (compressedSize === 0xffffffff || uncompressedSize === 0xffffffff) {
+      throw new Error('ZIP64 XLSX entries are not supported.');
+    }
+
+    totalCompressed += compressedSize;
+    totalUncompressed += uncompressedSize;
+
+    if (totalUncompressed > XLSX_LIMITS.maxUncompressedBytes) {
+      throw new Error('XLSX uncompressed content is too large.');
+    }
+
+    offset += 46 + fileNameLength + extraLength + commentLength;
+  }
+
+  const compressedBytes = totalCompressed > 0 ? totalCompressed : (fallbackCompressedBytes || 0);
+  if (compressedBytes > 0) {
+    const ratio = totalUncompressed / compressedBytes;
+    if (ratio > XLSX_LIMITS.maxCompressionRatio) {
+      throw new Error('XLSX compression ratio is too high.');
+    }
+  }
+}
+
 export async function readXlsxMatrix(file) {
+  const buffer = await file.arrayBuffer();
+  inspectZipSafety(buffer, file.size || 0);
+
   const { default: ExcelJS } = await import('exceljs');
   const workbook = new ExcelJS.Workbook();
-  await workbook.xlsx.load(await file.arrayBuffer());
+  await workbook.xlsx.load(buffer);
   const worksheet = workbook.worksheets[0];
   if (!worksheet) return [];
 

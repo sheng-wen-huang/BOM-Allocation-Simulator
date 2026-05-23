@@ -48,6 +48,8 @@ The project includes `src/public/_headers`, which is copied into `dist/_headers`
 - Maximum file size: 10 MB
 - Maximum worksheet rows: 10,000
 - Maximum worksheet columns: 50
+- XLSX files must be valid ZIP containers (`PK` magic bytes)
+- ZIP safety checks reject abnormal entry counts, extreme compression ratios, and oversized uncompressed content
 
 ## BOM Template
 

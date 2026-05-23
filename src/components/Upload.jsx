@@ -15,6 +15,19 @@ async function readFile(file, callback) {
       return;
     }
 
+    const magicBuffer = await file.slice(0, 4).arrayBuffer();
+    const magic = new Uint8Array(magicBuffer);
+    const isZip =
+      magic.length >= 4 &&
+      magic[0] === 0x50 &&
+      magic[1] === 0x4b &&
+      magic[2] === 0x03 &&
+      magic[3] === 0x04;
+    if (!isZip) {
+      callback({ error: 'Invalid XLSX format.' }, file.name);
+      return;
+    }
+
     callback({ matrix: await readXlsxMatrix(file) }, file.name);
   } catch (error) {
     callback({ error: error.message }, file.name);
