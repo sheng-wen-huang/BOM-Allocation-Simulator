@@ -205,13 +205,13 @@ export function parseInventoryMatrix(matrix) {
 }
 
 export const sampleBomRows = [
-  ['WH1', 'KIT-A', 'COMP-1', '1', 'N', '', 2, 1, '', '', 900],
-  ['WH1', 'KIT-A', 'COMP-2', '2', 'N', '', 1, 1, '', '', 900],
-  ['WH1', 'KIT-B', 'COMP-1', '1', 'N', '', 1, 1, '', '', 600],
-  ['WH1', 'KIT-B', 'COMP-3', '2', 'N', '', 3, 1, '', '', 600],
-  ['WH1', 'KIT-C', 'COMP-2', '1', 'Y', '', 2, 1, 'X', '', 8],
-  ['WH1', 'KIT-C', 'COMP-4', '2', 'Y', '', 1, 1, 'X', '', 8],
-  ['WH1', 'KIT-D', 'COMP-1', '1', 'N', '', 1, 1, '', '', 0],
+  ['XYZ', 'BOM-A', 'COMP-1', '1', 'Y', '', 2, 1, '', '', 900],
+  ['XYZ', 'BOM-A', 'COMP-2', '2', 'Y', '', 1, 1, '', '', 900],
+  ['XYZ', 'BOM-B', 'COMP-1', '1', 'Y', '', 1, 1, '', '', 600],
+  ['XYZ', 'BOM-B', 'COMP-3', '2', 'Y', '', 3, 1, '', '', 600],
+  ['XYZ', 'BOM-C', 'COMP-2', '1', 'Y', '', 2, 1, 'X', '', 8],
+  ['XYZ', 'BOM-C', 'COMP-4', '2', 'Y', '', 1, 1, 'X', '', 8],
+  ['XYZ', 'BOM-D', 'COMP-1', '1', 'Y', '', 1, 1, '', '', 0],
 ];
 
 export const INVENTORY_COLUMNS = ['ComponentSKU', 'qty'];

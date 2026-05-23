@@ -195,6 +195,10 @@ export default function WhatIf({
     });
   }
 
+  function toggleComparisonSort(sortKey) {
+    updateComparisonSort(sortKey);
+  }
+
   return (
     <div className="whatif-layout">
       <aside className="scenario-panel">
@@ -302,31 +306,33 @@ export default function WhatIf({
         <div className="panel-header">
           <div>
             <h2>Before / After Comparison</h2>
-            <p>Sort by SKU, Priority/ReservedQty, Before AvailSOH, or After AvailSOH</p>
-          </div>
-          <div className="sort-row">
-            <button type="button" className="sort-button" onClick={() => updateComparisonSort('parentSku')}>
-              Order by SKU
-            </button>
-            <button type="button" className="sort-button" onClick={() => updateComparisonSort('priorityScore')}>
-              Order by Priority/ReservedQty
-            </button>
-            <button type="button" className="sort-button" onClick={() => updateComparisonSort('beforeAvailSoh')}>
-              Order by Before AvailSOH
-            </button>
-            <button type="button" className="sort-button" onClick={() => updateComparisonSort('afterAvailSoh')}>
-              Order by After AvailSOH
-            </button>
+            <p>Click column headers to sort</p>
           </div>
         </div>
         <div className="table-wrap">
           <table>
             <thead>
               <tr>
-                <th>SKU</th>
-                <th>Priority/ReservedQty</th>
-                <th>Before AvailSOH</th>
-                <th>After AvailSOH</th>
+                <th>
+                  <button type="button" className="sort-button" onClick={() => toggleComparisonSort('parentSku')}>
+                    SKU
+                  </button>
+                </th>
+                <th>
+                  <button type="button" className="sort-button" onClick={() => toggleComparisonSort('priorityScore')}>
+                    Priority/ReservedQty
+                  </button>
+                </th>
+                <th>
+                  <button type="button" className="sort-button" onClick={() => toggleComparisonSort('beforeAvailSoh')}>
+                    Before AvailSOH
+                  </button>
+                </th>
+                <th>
+                  <button type="button" className="sort-button" onClick={() => toggleComparisonSort('afterAvailSoh')}>
+                    After AvailSOH
+                  </button>
+                </th>
                 <th>Delta</th>
                 <th>Mode</th>
               </tr>

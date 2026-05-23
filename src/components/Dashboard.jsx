@@ -145,17 +145,6 @@ export default function Dashboard({ calculation }) {
             <h2>Results</h2>
             <p>Click a row to inspect allocation details</p>
           </div>
-          <div className="sort-row">
-            <button type="button" className="sort-button" onClick={() => toggleSort('parentSku')}>
-              Order by SKU
-            </button>
-            <button type="button" className="sort-button" onClick={() => toggleSort('priorityScore')}>
-              Order by Priority/ReservedQty
-            </button>
-            <button type="button" className="sort-button" onClick={() => toggleSort('availSoh')}>
-              Order by AvailSOH
-            </button>
-          </div>
           <input
             className="search-input"
             value={query}

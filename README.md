@@ -71,9 +71,9 @@ Calculation controls:
 
 ```text
 storerkey,sku,componentsku,sequence,bomonly,notes,qty,parentqty,udf01,udf02,udf03
-WH1,KIT-A,COMP-1,1,N,,2,1,,,900
-WH1,KIT-A,COMP-2,2,N,,1,1,,,900
-WH1,KIT-C,COMP-2,1,Y,,2,1,X,,8
+XYZ,BOM-A,COMP-1,1,Y,,2,1,,,900
+XYZ,BOM-A,COMP-2,2,Y,,1,1,,,900
+XYZ,BOM-C,COMP-2,1,Y,,2,1,X,,8
 ```
 
 Accepted BOM column aliases:
@@ -113,7 +113,7 @@ Priority adjustments are limited from `0` to `1000`.
 
 `Reset All` restores the baseline scenario and keeps the comparison table populated with baseline results.
 
-Before / After Comparison supports ordering by `SKU`, `Priority/ReservedQty`, `Before AvailSOH`, and `After AvailSOH`.
+Before / After Comparison supports sorting by clicking the table headers (`SKU`, `Priority/ReservedQty`, `Before AvailSOH`, `After AvailSOH`).
 
 ## Export
 
@@ -128,3 +128,4 @@ Export values reflect the selected result set.
 - `udf01` exports `X` for fixed mode and blank for non-fixed mode.
 - `udf03` always exports `Priority/ReservedQty` from the What-If or baseline result.
 - Export row ordering follows the current What-If comparison sorting order.
+- Export preview uses padded monospace alignment so `|` separators stay aligned.
