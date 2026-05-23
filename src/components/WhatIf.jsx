@@ -77,6 +77,7 @@ export default function WhatIf({
   onScenarioChange,
   onScenarioResult,
   onRunWhatIf,
+  onComparisonOrderChange,
 }) {
   const [isRunning, setIsRunning] = useState(false);
   const [error, setError] = useState('');
@@ -198,6 +199,10 @@ export default function WhatIf({
   function toggleComparisonSort(sortKey) {
     updateComparisonSort(sortKey);
   }
+
+  useEffect(() => {
+    onComparisonOrderChange(sortedComparison.map((row) => row.parentSku));
+  }, [onComparisonOrderChange, sortedComparison]);
 
   return (
     <div className="whatif-layout">
@@ -333,8 +338,16 @@ export default function WhatIf({
                     After AvailSOH
                   </button>
                 </th>
-                <th>Delta</th>
-                <th>Mode</th>
+                <th>
+                  <button type="button" className="sort-button" onClick={() => toggleComparisonSort('delta')}>
+                    Delta
+                  </button>
+                </th>
+                <th>
+                  <button type="button" className="sort-button" onClick={() => toggleComparisonSort('mode')}>
+                    Mode
+                  </button>
+                </th>
               </tr>
             </thead>
             <tbody>

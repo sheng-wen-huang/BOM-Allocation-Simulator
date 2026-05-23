@@ -113,7 +113,7 @@ Priority adjustments are limited from `0` to `1000`.
 
 `Reset All` restores the baseline scenario and keeps the comparison table populated with baseline results.
 
-Before / After Comparison supports sorting by clicking the table headers (`SKU`, `Priority/ReservedQty`, `Before AvailSOH`, `After AvailSOH`).
+Before / After Comparison supports sorting by clicking the table headers (`SKU`, `Priority/ReservedQty`, `Before AvailSOH`, `After AvailSOH`, `Delta`, `Mode`).
 
 ## Export
 

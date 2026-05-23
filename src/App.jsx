@@ -37,6 +37,7 @@ export default function App() {
   const [calculation, setCalculation] = useState(null);
   const [whatIfState, setWhatIfState] = useState(makeEmptyScenarioState);
   const [whatIfCalculation, setWhatIfCalculation] = useState(null);
+  const [comparisonOrder, setComparisonOrder] = useState([]);
   const [isRunning, setIsRunning] = useState(false);
   const [runError, setRunError] = useState('');
   const workerRef = useRef(null);
@@ -97,6 +98,7 @@ export default function App() {
     setCalculation(null);
     setWhatIfState(makeEmptyScenarioState());
     setWhatIfCalculation(null);
+    setComparisonOrder([]);
     setRunError('');
     setActiveTab('upload');
   }, []);
@@ -114,6 +116,7 @@ export default function App() {
     setCalculation(null);
     setWhatIfState(makeEmptyScenarioState());
     setWhatIfCalculation(null);
+    setComparisonOrder([]);
     setRunError('');
     setActiveTab('upload');
   }, []);
@@ -131,6 +134,7 @@ export default function App() {
       setCalculation(payload);
       setWhatIfState(makeEmptyScenarioState());
       setWhatIfCalculation(null);
+      setComparisonOrder([]);
       setActiveTab('dashboard');
     } catch (error) {
       setRunError(error.message);
@@ -153,7 +157,7 @@ export default function App() {
   const currentTab = calculation ? activeTab : activeTab === 'upload' ? activeTab : 'upload';
   const exportCalculation = whatIfCalculation || calculation;
   const exportSourceLabel = whatIfCalculation ? 'What-If result' : 'Baseline result';
-  const exportOrder = whatIfState.comparison.map((row) => row.parentSku);
+  const exportOrder = comparisonOrder;
 
   return (
     <div className="app-shell">
@@ -206,6 +210,7 @@ export default function App() {
             onScenarioChange={setWhatIfState}
             onScenarioResult={setWhatIfCalculation}
             onRunWhatIf={runWhatIf}
+            onComparisonOrderChange={setComparisonOrder}
           />
         )}
         {currentTab === 'export' && calculation && (
