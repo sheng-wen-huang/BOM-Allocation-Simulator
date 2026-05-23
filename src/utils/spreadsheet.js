@@ -6,6 +6,20 @@ export const XLSX_LIMITS = {
   maxColumns: 50,
 };
 
+export const EXPORT_COLUMNS = [
+  'Storerkey',
+  'Sku',
+  'ComponentSku',
+  'Sequence',
+  'BomOnly',
+  'Notes',
+  'Qty',
+  'ParentQty',
+  'UDF01',
+  'UDF02',
+  'UDF03',
+];
+
 function cellToValue(value) {
   if (value === null || value === undefined) return '';
   if (value instanceof Date) return value.toISOString().slice(0, 10);
@@ -49,7 +63,7 @@ export function bomTemplateResultsToRows(bomRows, calculation) {
   return bomRows.map((row) => {
     const result = resultByParent.get(row.parentSku);
     const isFixed = result?.mode === 'X';
-    const udf03 = isFixed ? result?.availSoh : result?.priorityScore;
+    const udf03 = result?.priorityScore;
     return [
       row.storerkey,
       row.parentSku,
@@ -96,7 +110,7 @@ async function downloadWorkbookXlsx(filename, sheetName, headers, rows) {
 }
 
 export function downloadXlsx(filename, rows) {
-  return downloadWorkbookXlsx(filename, 'BOM Allocation Result', BOM_COLUMNS, rows);
+  return downloadWorkbookXlsx(filename, 'BOM Allocation Result', EXPORT_COLUMNS, rows);
 }
 
 export function downloadTemplateXlsx(filename, sheetName, headers, rows) {

@@ -1,10 +1,19 @@
 import { Download } from 'lucide-react';
-import { bomTemplateResultsToRows, datedResultFilename, downloadXlsx } from '../utils/spreadsheet.js';
-import { BOM_COLUMNS } from '../engine/parser.js';
+import { EXPORT_COLUMNS, bomTemplateResultsToRows, datedResultFilename, downloadXlsx } from '../utils/spreadsheet.js';
+
+function formatPreviewRows(rows) {
+  const widths = rows[0].map((_, columnIndex) =>
+    Math.max(...rows.map((row) => String(row[columnIndex] ?? '').length)),
+  );
+
+  return rows.map((row) =>
+    row.map((cell, columnIndex) => String(cell ?? '').padEnd(widths[columnIndex], ' ')).join(' | '),
+  );
+}
 
 export default function Export({ bomRows, calculation, sourceLabel }) {
   const rows = bomTemplateResultsToRows(bomRows, calculation);
-  const preview = [BOM_COLUMNS, ...rows];
+  const preview = formatPreviewRows([EXPORT_COLUMNS, ...rows]);
   const filename = datedResultFilename();
 
   return (
@@ -21,7 +30,7 @@ export default function Export({ bomRows, calculation, sourceLabel }) {
         </div>
         <div className="export-preview">
           {preview.map((line, index) => (
-            <code key={`${line.join('|')}-${index}`}>{line.join(' | ')}</code>
+            <code key={`${line}-${index}`}>{line}</code>
           ))}
         </div>
       </section>

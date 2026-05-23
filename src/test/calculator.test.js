@@ -281,7 +281,7 @@ describe('calculateAllocation', () => {
     const calculation = calculateAllocation(bomRows, inventoryRows);
 
     expect(bomTemplateResultsToRows(bomRows, calculation)).toEqual([
-      ['WH1', 'KIT-X', 'COMP-1', '10', 'Y', 'Reserve', '2', '1', 'X', '', 4],
+      ['WH1', 'KIT-X', 'COMP-1', '10', 'Y', 'Reserve', '2', '1', 'X', '', 10],
       ['WH1', 'KIT-P', 'COMP-1', '20', 'N', 'Priority', '1', '1', '', '', 500],
     ]);
   });
